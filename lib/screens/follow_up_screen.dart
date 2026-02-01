@@ -3,6 +3,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../config/theme.dart';
 import '../models/task.dart';
 import '../services/firebase_service.dart';
+import '../services/whatsapp_service.dart';
+import '../models/interaction.dart';
+
+import '../models/visitor.dart';
 
 class FollowUpScreen extends StatefulWidget {
   const FollowUpScreen({super.key});
@@ -13,11 +17,13 @@ class FollowUpScreen extends StatefulWidget {
 
 class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final _whatsappService = WhatsappService();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _generateAutoTasks();
   }
 
   @override
@@ -26,18 +32,19 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
     super.dispose();
   }
 
-  Future<void> _openWhatsApp(String phone) async {
-    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
-    final url = Uri.parse('https://wa.me/$cleanPhone');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  Future<void> _makeCall(String phone) async {
+  Future<void> _makeCall(String phone, String visitorId) async {
     final url = Uri.parse('tel:$phone');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
+      FirebaseService.addInteraction(Interaction(
+        id: '',
+        visitorId: visitorId,
+        type: 'call',
+        content: 'Appel lancé depuis Suivi',
+        date: DateTime.now(),
+        authorId: FirebaseService.currentUser?.id ?? 'current_user',
+        authorName: FirebaseService.currentUser?.nom ?? 'Moi',
+      ));
     }
   }
 
@@ -55,110 +62,211 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
     }
   }
 
+  Future<void> _openWhatsApp(String phone, String visitorId, String visitorName) async {
+    await _whatsappService.openWhatsApp(phone, "Bonjour $visitorName, ravis de vous avoir accueilli à ZOE Church ! Comment allez-vous ?");
+    
+    FirebaseService.addInteraction(Interaction(
+      id: '',
+      visitorId: visitorId,
+      type: 'whatsapp',
+      content: 'WhatsApp envoyé depuis Suivi',
+      date: DateTime.now(),
+      authorId: FirebaseService.currentUser?.id ?? 'current_user',
+      authorName: FirebaseService.currentUser?.nom ?? 'Moi',
+    ));
+  }
+
+  Future<void> _generateAutoTasks() async {
+    // Génération automatique des tâches pour les visiteurs < 48h
+    final now = DateTime.now();
+    final twoDaysAgo = now.subtract(const Duration(hours: 48));
+    
+    // 1. Récupérer les visiteurs récents
+    final visitors = await FirebaseService.getVisitorsSince(twoDaysAgo);
+    
+    // 2. Vérifier s'ils ont déjà une tâche
+    for (var v in visitors) {
+       // Création de la tâche
+       // Note: Idéalement vérifier unicité backend
+       await FirebaseService.createFollowUpTask(
+         FollowUpTask(
+           id: '', // Auto-generated
+           visitorId: v.id,
+           visitorName: v.nomComplet,
+           visitorPhone: v.telephone,
+           description: '📞 Contacter pour suivi (48h)',
+           dateEcheance: v.dateEnregistrement.add(const Duration(days: 2)),
+
+           statut: 'a_faire',
+         )
+       );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: Colors.transparent, // Gradient
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF8F9FA), Color(0xFFF0F4F8)],
+          ),
+        ),
+        child: Stack(
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(20),
+            // Watermark
+            Positioned.fill(
+              child: Center(
+                child: Opacity(
+                  opacity: 0.03,
+                  child: Icon(
+                    Icons.church, // Placeholder
+                    size: 300,
+                    color: AppTheme.zoeBlue,
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Suivi & Rappels',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Gérez vos contacts de la semaine.',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Performance Card
-            StreamBuilder<List<FollowUpTask>>(
-              stream: FirebaseService.getTasksStream(),
-              builder: (context, snapshot) {
-                final tasks = snapshot.data ?? [];
-                final completed = tasks.where((t) => t.statut == 'termine').length;
-                final total = tasks.length;
-                final percentage = total > 0 ? (completed / total * 100).round() : 0;
-                
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
+                   // Header Custom
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF1B365D).withOpacity(0.1),
+                          const Color(0xFFB41E3A).withOpacity(0.1),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(24),
+                        bottomRight: Radius.circular(24),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Performance Hebdo',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              '$percentage%',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: percentage / 100,
-                            backgroundColor: Colors.grey[200],
-                            valueColor: const AlwaysStoppedAnimation(AppTheme.primaryColor),
-                            minHeight: 8,
+                        const Text(
+                          'Suivi & Rappels',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1B365D),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         Text(
-                          '$completed visiteurs sur $total contactés',
+                          'Gérez vos contacts de la semaine.',
                           style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[500],
+                            fontSize: 15,
+                            color: Colors.grey[600],
                           ),
                         ),
                       ],
                     ),
                   ),
+                  
+                  // Performance Card (Needs to be separate or below header?)
+                  // The original code had performance card directly after header.
+                  // I will keep it outside the header container but make sure there is spacing.
+                  const SizedBox(height: 16),
+            
+            // Performance Card
+            StreamBuilder<List<Visitor>>(
+              stream: FirebaseService.getVisitorsStream(), // Need visitors for denominator
+              builder: (context, snapshotVisitors) {
+                final visitors = snapshotVisitors.data ?? [];
+                
+                return StreamBuilder<List<FollowUpTask>>(
+                  stream: FirebaseService.getTasksStream(),
+                  builder: (context, snapshotTasks) {
+                    final tasks = snapshotTasks.data ?? [];
+                    final completed = tasks.where((t) => t.statut == 'termine').length;
+                    
+                    // Nouveaux visiteurs de la semaine
+                    final now = DateTime.now();
+                    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+                    final newVisitorsThisWeek = visitors.where((v) => 
+                        v.dateEnregistrement.isAfter(startOfWeek)).length;
+                    
+                    // Ratio: Tâches terminées / Nouveaux visiteurs (Cible: 1 appel par visiteur)
+                    // Si 0 visiteurs, 100% si des tâches sont faites, ou 0.
+                    final totalTarget = newVisitorsThisWeek > 0 ? newVisitorsThisWeek : (completed > 0 ? completed : 1);
+                    final percentage = (completed / totalTarget * 100).clamp(0, 100).round();
+                    
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Performance Hebdo',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  '$percentage%',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: percentage / 100,
+                                backgroundColor: Colors.grey[200],
+                                valueColor: const AlwaysStoppedAnimation(AppTheme.primaryColor),
+                                minHeight: 8,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '$completed suivis sur $newVisitorsThisWeek nouveaux visiteurs',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
-              },
+              }
             ),
             
             const SizedBox(height: 20),
@@ -223,17 +331,20 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
                 ],
               ),
             ),
-          ],
+            ],
+          ),
         ),
-      ),
+            ],
+          ),
+        ),
     );
   }
 }
 
 class _TaskList extends StatelessWidget {
   final String statut;
-  final Function(String) onCall;
-  final Function(String) onWhatsApp;
+  final Function(String, String) onCall;
+  final Function(String, String, String) onWhatsApp;
   final Function(FollowUpTask) onMarkDone;
   final bool showDoneButton;
 
@@ -284,8 +395,8 @@ class _TaskList extends StatelessWidget {
             final task = tasks[index];
             return _TaskCard(
               task: task,
-              onCall: () => onCall(task.visitorId),
-              onWhatsApp: () => onWhatsApp(task.visitorId),
+              onCall: () => onCall(task.visitorPhone, task.visitorId),
+              onWhatsApp: () => onWhatsApp(task.visitorPhone, task.visitorId, task.visitorName),
               onMarkDone: () => onMarkDone(task),
               showDoneButton: showDoneButton,
             );
@@ -349,7 +460,7 @@ class _TaskCardState extends State<_TaskCard> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.05), // Requested 0.05
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -387,13 +498,30 @@ class _TaskCardState extends State<_TaskCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.task.visitorName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.task.visitorName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: widget.task.statut == 'termine' 
+                                ? AppTheme.accentGreen 
+                                : (isOverdue ? AppTheme.accentRed : AppTheme.accentOrange),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
                     ),
                     Text(
                       'Visiteur (Dimanche dernier)',

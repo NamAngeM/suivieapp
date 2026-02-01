@@ -4,6 +4,7 @@ class FollowUpTask {
   final String id;
   final String visitorId;
   final String visitorName;
+  final String visitorPhone; // Added phone for direct action
   final String description;
   final String statut;
   final String? note;
@@ -15,6 +16,7 @@ class FollowUpTask {
     required this.id,
     required this.visitorId,
     required this.visitorName,
+    required this.visitorPhone,
     required this.description,
     this.statut = 'a_faire',
     this.note,
@@ -44,6 +46,7 @@ class FollowUpTask {
       id: doc.id,
       visitorId: data['visitorId'] ?? '',
       visitorName: data['visitorName'] ?? '',
+      visitorPhone: data['visitorPhone'] ?? '',
       description: data['description'] ?? '',
       statut: data['statut'] ?? 'a_faire',
       note: data['note'],
@@ -57,6 +60,7 @@ class FollowUpTask {
     return {
       'visitorId': visitorId,
       'visitorName': visitorName,
+      'visitorPhone': visitorPhone,
       'description': description,
       'statut': statut,
       'note': note,
@@ -70,6 +74,7 @@ class FollowUpTask {
     String? id,
     String? visitorId,
     String? visitorName,
+    String? visitorPhone,
     String? description,
     String? statut,
     String? note,
@@ -80,6 +85,7 @@ class FollowUpTask {
       id: id ?? this.id,
       visitorId: visitorId ?? this.visitorId,
       visitorName: visitorName ?? this.visitorName,
+      visitorPhone: visitorPhone ?? this.visitorPhone,
       description: description ?? this.description,
       statut: statut ?? this.statut,
       note: note ?? this.note,

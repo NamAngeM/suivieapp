@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Couleurs "Premium Modern"
-  // Un bleu plus profond et sophistiqué (Royal Indigo)
-  static const Color primaryColor = Color(0xFF3F51B5); // Indigo 500
-  static const Color primaryDark = Color(0xFF1A237E);  // Indigo 900
-  static const Color primaryLight = Color(0xFFC5CAE9); // Indigo 100
-  
-  // Accents plus vifs
-  static const Color accentGreen = Color(0xFF00C853);  // Green A700 (Vibrant)
-  static const Color accentOrange = Color(0xFFFF6D00); // Orange A700
-  static const Color accentRed = Color(0xFFD50000);    // Red A700
+  // PALETTE DE COULEURS (Basée sur le logo Zoe Church)
+  static const Color primaryColor = Color(0xFFC00C3F); // Zoe Red (Burgundy)
+  static const Color zoeBlue = Color(0xFF1A2A57);      // Zoe Blue (Deep Navy)
+
+  // Accents
+  static const Color accentGreen = Color(0xFF4CAF50);  // Green (Success)
+  static const Color accentOrange = Color(0xFFFF9800); // Orange (Warning/Pending)
+  static const Color accentRed = Color(0xFFE53935);    // Red (Error)
   
   // Textes & Fonds
-  static const Color textPrimary = Color(0xFF1F2933);  // Dark Blue-Grey (Soft Black)
+  static const Color textPrimary = Color(0xFF1A2A57);  // Use Zoe Blue for primary text
   static const Color textSecondary = Color(0xFF52606D); // Medium Blue-Grey
   
   // Backwards compatibility & Helper colors
@@ -25,6 +23,8 @@ class AppTheme {
 
   // Avatars avec des couleurs plus "Pastel/Modernes"
   static const List<Color> avatarColors = [
+    Color(0xFFC00C3F), // Zoe Red
+    Color(0xFF1A2A57), // Zoe Blue
     Color(0xFF5C6BC0), // Indigo lighten
     Color(0xFFEC407A), // Pink lighten
     Color(0xFFAB47BC), // Purple lighten
@@ -56,7 +56,7 @@ class AppTheme {
       
       colorScheme: ColorScheme.light(
         primary: primaryColor,
-        secondary: accentGreen,
+        secondary: zoeBlue,
         surface: backgroundCard,
         error: accentRed,
         // background: backgroundScaffold, // Deprecated
@@ -92,19 +92,31 @@ class AppTheme {
         fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: zoeBlue, width: 0.5),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5), // Bordure subtile au lieu de fond gris
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: zoeBlue, width: 0.5),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: zoeBlue, width: 1.5),
         ),
-        labelStyle: TextStyle(color: textSecondary),
-        hintStyle: TextStyle(color: Colors.grey.shade400),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: accentRed, width: 0.5),
+        ),
+        labelStyle: GoogleFonts.inter(
+          color: textSecondary, 
+          fontWeight: FontWeight.w500,
+          fontSize: 14,
+        ),
+        hintStyle: GoogleFonts.inter(
+          color: Colors.blueGrey.shade300,
+          fontSize: 14,
+        ),
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
       ),
       
       elevatedButtonTheme: ElevatedButtonThemeData(

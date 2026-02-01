@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../config/theme.dart';
-import '../models/visitor.dart';
 import '../models/visitor.dart';
 import '../models/interaction.dart';
 import '../models/message_template.dart';
 import '../services/integration_service.dart';
 import '../services/firebase_service.dart';
 import '../services/whatsapp_service.dart';
+import '../models/integration_step.dart';
+import '../widgets/integration_timeline.dart';
 
 class VisitorDetailsScreen extends StatefulWidget {
   final Visitor visitor;
@@ -38,101 +40,146 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
     super.dispose();
   }
 
+  Future<void> _makeCall(String phone) async {
+    final url = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+      // Enregistrer l'interaction
+      FirebaseService.addInteraction(Interaction(
+        id: '',
+        visitorId: _visitor.id,
+        type: 'call',
+        content: 'Appel téléphonique lancé',
+        date: DateTime.now(),
+        authorId: FirebaseService.currentUser?.id ?? 'current_user',
+        authorName: FirebaseService.currentUser?.nom ?? 'Moi',
+      ));
+    }
+  }
+
+  Future<void> _sendSMS(String phone) async {
+    final url = Uri.parse('sms:$phone');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    }
+  }
+
   Future<void> _showWhatsAppTemplates() async {
     showModalBottomSheet(
       context: context,
-      builder: (context) => StreamBuilder<List<MessageTemplate>>(
-        stream: FirebaseService.getMessageTemplatesStream(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-          
-          final templates = snapshot.data!;
-          // Ajouter un template par défaut "Message vide"
-          final allTemplates = [
-            MessageTemplate(id: 'manual', title: 'Message manuel', content: ''),
-            ...templates
-          ];
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: StreamBuilder<List<MessageTemplate>>(
+          stream: FirebaseService.getMessageTemplatesStream(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text('Erreur de chargement des modèles: ${snapshot.error}'),
+              ));
+            }
 
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('Choisir un modèle', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: allTemplates.length,
-                  itemBuilder: (context, index) {
-                    final t = allTemplates[index];
-                    return ListTile(
-                      title: Text(t.title),
-                      subtitle: t.content.isNotEmpty 
-                          ? Text(t.content, maxLines: 1, overflow: TextOverflow.ellipsis)
-                          : null,
-                      onTap: () {
-                        Navigator.pop(context);
-                        _whatsappService.sendTemplateMessage(_visitor, t);
-                        // Enregistrer l'interaction
-                        FirebaseService.addInteraction(Interaction(
-                          id: '',
-                          visitorId: _visitor.id,
-                          type: 'whatsapp',
-                          content: 'Template: ${t.title}',
-                          date: DateTime.now(),
-                          authorId: 'current_user', // TODO: user ID
-                          authorName: 'Moi', // TODO: user name
-                        ));
-                      },
-                    );
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            
+            final templates = snapshot.data ?? [];
+            final allTemplates = templates;
+
+            return Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Choisir un modèle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: allTemplates.length,
+                    itemBuilder: (context, index) {
+                      final t = allTemplates[index];
+                      return ListTile(
+                        leading: const Icon(Icons.chat_bubble_outline, color: AppTheme.accentGreen),
+                        title: Text(t.title),
+                        subtitle: t.content.isNotEmpty 
+                            ? Text(t.content, maxLines: 1, overflow: TextOverflow.ellipsis)
+                            : const Text('Ouvrir WhatsApp sans message prédéfini'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _whatsappService.sendTemplateMessage(_visitor, t);
+                          FirebaseService.addInteraction(Interaction(
+                            id: '',
+                            visitorId: _visitor.id,
+                            type: 'whatsapp',
+                            content: 'WhatsApp: ${t.title}',
+                            date: DateTime.now(),
+                            authorId: FirebaseService.currentUser?.id ?? 'current_user',
+                            authorName: FirebaseService.currentUser?.nom ?? 'Moi',
+                          ));
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const Divider(),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text('MESSAGES DIRECTS', style: TextStyle(
+                    fontSize: 10, 
+                    fontWeight: FontWeight.bold, 
+                    color: Colors.grey,
+                    letterSpacing: 1.1,
+                  )),
+                ),
+                // Quick WhatsApp option
+                ListTile(
+                  leading: const Icon(Icons.chat_bubble_outline, color: AppTheme.accentGreen),
+                  title: const Text('Message WhatsApp'),
+                  subtitle: const Text('Ouvrir WhatsApp sans modèle'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _whatsappService.openWhatsApp(_visitor.telephone, "");
                   },
                 ),
-              ),
-            ],
-          );
-        },
+                // Quick SMS option
+                ListTile(
+                  leading: const Icon(Icons.sms_outlined, color: Colors.blue),
+                  title: const Text('Message SMS'),
+                  subtitle: const Text('Envoyer un SMS classique'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _sendSMS(_visitor.telephone);
+                  },
+                ),
+                const SizedBox(height: 20),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  Future<void> _toggleStep(String stepId) async {
-    setState(() => _isLoading = true);
-    try {
-      if (_visitor.integrationSteps[stepId] != null) {
-        // Dévalider (si nécessaire, pas forcément accessible à tous)
-        // await _integrationService.unvalidateStep(_visitor, stepId); // Pas implémenté pour l'instant
-      } else {
-        // Valider
-        if (_integrationService.canValidateStep(_visitor, stepId)) {
-          await _integrationService.validateStep(_visitor, stepId);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Veuillez valider les étapes précédentes d\'abord.')),
-          );
-        }
-      }
-      
-      // Ici idéalement on rechargerait le visiteur depuis Firebase
-      // Pour simuler la réactivité immédiate :
-      final updatedSteps = Map<String, DateTime?>.from(_visitor.integrationSteps);
-      updatedSteps[stepId] = DateTime.now();
-      setState(() {
-        _visitor = _visitor.copyWith(integrationSteps: updatedSteps);
-        _isLoading = false;
-      });
-      
-    } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
-    }
-  }
+  // _toggleStep removed (replaced by IntegrationTimelineWidget logic)
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white, // Use theme default
       appBar: AppBar(
         title: Text(_visitor.nomComplet),
         backgroundColor: Colors.white,
@@ -172,7 +219,33 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _buildIntegrationStepper(),
+                      IntegrationTimelineWidget(
+                        visitor: _visitor,
+                        onStatusChanged: (step, status) async {
+                          setState(() => _isLoading = true);
+                          await _integrationService.updateStepStatus(_visitor, step.id, status);
+                          // Force refresh (simplified) because _visitor is state. 
+                          // Ideally we should re-fetch or use a Stream for the whole screen.
+                          // But for now, let's keep it simple.
+                          // We need to update the local _visitor state to reflect changes immediately
+                          // Logic to update local _visitor path:
+                          final newPath = List<IntegrationStep>.from(_visitor.integrationPath);
+                          final idx = newPath.indexWhere((s) => s.id == step.id);
+                          if (idx != -1) {
+                            newPath[idx] = newPath[idx].copyWith(status: status, updatedAt: DateTime.now());
+                            // Handle auto-unlock logic locally for UI responsiveness? 
+                            // Or just wait for reload. Let's rely on setState re-render if we updated local object.
+                            // However, updateStepStatus returns void and does Firestore update.
+                            // We should really start listening to the visitor stream in `initState` or `build`.
+                            // But for this patch, let's just assume hot reload or re-entry. 
+                            // OR, manually update local state:
+                             setState(() {
+                               _visitor = _visitor.copyWith(integrationPath: newPath);
+                               _isLoading = false;
+                             });
+                          }
+                        },
+                      ),
                       // ... reste du contenu
                     ],
                   ),
@@ -369,18 +442,7 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
               ),
               IconButton(
                 icon: const Icon(Icons.phone, color: AppTheme.primaryColor),
-                onPressed: () {
-                  // Enregistrer l'appel
-                  FirebaseService.addInteraction(Interaction(
-                    id: '',
-                    visitorId: _visitor.id,
-                    type: 'call',
-                    content: 'Appel téléphonique',
-                    date: DateTime.now(),
-                    authorId: 'current_user',
-                    authorName: 'Moi',
-                  ));
-                }, 
+                onPressed: () => _makeCall(_visitor.telephone), 
               ),
               IconButton(
                 icon: const Icon(Icons.chat, color: AppTheme.accentGreen),
@@ -393,81 +455,5 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
     );
   }
 
-  Widget _buildIntegrationStepper() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: IntegrationService.steps.length,
-      itemBuilder: (context, index) {
-        final stepId = IntegrationService.steps[index];
-        final label = IntegrationService.stepLabels[stepId]!;
-        final isValidated = _visitor.integrationSteps[stepId] != null;
-        final date = _visitor.integrationSteps[stepId];
-        final isLast = index == IntegrationService.steps.length - 1;
-        
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                children: [
-                  GestureDetector(
-                    onTap: () => _toggleStep(stepId),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: isValidated ? AppTheme.accentGreen : Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isValidated ? AppTheme.accentGreen : Colors.grey[300]!,
-                          width: 2,
-                        ),
-                      ),
-                      child: isValidated
-                          ? const Icon(Icons.check, color: Colors.white, size: 20)
-                          : null,
-                    ),
-                  ),
-                  if (!isLast)
-                    Expanded(
-                      child: Container(
-                        width: 2,
-                        color: Colors.grey[300],
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 4),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: isValidated ? FontWeight.bold : FontWeight.normal,
-                        color: isValidated ? AppTheme.textPrimary : Colors.grey[600],
-                      ),
-                    ),
-                    if (isValidated)
-                      Text(
-                        'Validé le ${DateFormat('dd/MM/yyyy').format(date!)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    const SizedBox(height: 32),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+
 }

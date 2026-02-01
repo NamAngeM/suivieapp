@@ -137,6 +137,17 @@ class FirebaseService {
         .map((snapshot) => 
             snapshot.docs.map((doc) => FollowUpTask.fromFirestore(doc)).toList());
   }
+
+  static Future<void> createFollowUpTask(FollowUpTask task) async {
+    await addTask(task);
+  }
+
+  static Future<List<Visitor>> getVisitorsSince(DateTime date) async {
+    final snapshot = await visitorsCollection
+        .where('dateEnregistrement', isGreaterThan: date)
+        .get();
+    return snapshot.docs.map((doc) => Visitor.fromFirestore(doc)).toList();
+  }
   
   // === TEAM ===
   

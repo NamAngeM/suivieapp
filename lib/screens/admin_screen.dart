@@ -171,394 +171,459 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF8F9FA), Color(0xFFF0F4F8)],
+          ),
+        ),
+        child: Stack(
           children: [
-            // Header
-            const Text(
-              'Administration',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Gérez l\'équipe et les paramètres.',
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 32),
-            
-            // QR Code Section
-            const Text(
-              'QR Code Visiteurs',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const QrDisplayScreen(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.qr_code),
-                label: const Text('Afficher le QR Code'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            // Watermark
+            Positioned.fill(
+              child: Center(
+                child: Opacity(
+                  opacity: 0.03,
+                  child: Icon(
+                    Icons.church,
+                    size: 300,
+                    color: AppTheme.zoeBlue,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'À afficher à l\'entrée de l\'église pour que les visiteurs s\'enregistrent.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[500],
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            
-            // Communication Section
-            const Text(
-              'Communication',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildSettingsCard(
-              child: ListTile(
-                leading: const Icon(Icons.message_outlined, color: AppTheme.primaryColor),
-                title: const Text('Templates WhatsApp'),
-                subtitle: const Text('Gérer les modèles de messages'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const TemplatesScreen()),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildSettingsCard(
-              child: ListTile(
-                leading: const Icon(Icons.security, color: AppTheme.accentOrange),
-                title: const Text('Journal d\'Audit'),
-                subtitle: const Text('Voir l\'historique des actions'),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AuditLogScreen()),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 32),
-            
-            // Synchronisation Status
-            const SyncIndicator(),
-            const SizedBox(height: 32),
-            
-            // Team Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Membres de l\'équipe',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextButton(
-                  onPressed: _showAddMemberDialog,
-                  child: const Text('Ajouter'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            
-            // Team List
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: StreamBuilder<List<TeamMember>>(
-                stream: FirebaseService.getTeamStream(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  
-                  final members = snapshot.data ?? [];
-                  
-                  if (members.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Center(
-                        child: Text(
-                          'Aucun membre',
-                          style: TextStyle(color: Colors.grey[400]),
-                        ),
-                      ),
-                    );
-                  }
-                  
-                  return Column(
-                    children: members.map((member) {
-                      return _TeamMemberTile(member: member);
-                    }).toList(),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 32),
-            
-            // Auto Message Section
-            const Text(
-              'Message Automatique',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: _isLoadingMessage
-                  ? const Center(child: CircularProgressIndicator())
-                  : TextField(
-                      controller: _messageController,
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        hintText: 'Message d\'accueil automatique...',
-                        filled: true,
-                        fillColor: AppTheme.backgroundGrey,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isSaving ? null : _saveMessage,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text(
-                        'Enregistrer les modifications',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            
-            // Sync Status
-            Row(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.accentGreen,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Synchronisation Firebase',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      _lastSync != null
-                          ? 'Dernière synchro : il y a ${DateTime.now().difference(_lastSync!).inMinutes} min'
-                          : 'Synchronisé',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () {
-                    setState(() => _lastSync = DateTime.now());
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Synchronisation effectuée')),
-                    );
-                  },
-                  icon: Icon(Icons.refresh, color: Colors.grey[400]),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            
-            // Notification Settings Section
-            const Text(
-              'Notifications',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
+            SafeArea(
               child: Column(
                 children: [
-                  _buildNotificationSwitch(
-                    'Activer les notifications',
-                    'Recevoir toutes les notifications',
-                    Icons.notifications_outlined,
-                    _notificationsEnabled,
-                    (value) async {
-                      await _notificationService.setNotificationsEnabled(value);
-                      setState(() => _notificationsEnabled = value);
-                    },
-                  ),
-                  const Divider(height: 24),
-                  _buildNotificationSwitch(
-                    'Rappel J+3',
-                    'Notification 3 jours après inscription',
-                    Icons.calendar_today_outlined,
-                    _reminderJ3Enabled,
-                    (value) async {
-                      await _notificationService.setReminderJ3Enabled(value);
-                      setState(() => _reminderJ3Enabled = value);
-                    },
-                  ),
-                  const Divider(height: 24),
-                  _buildNotificationSwitch(
-                    'Rappel tâches',
-                    'Notification quotidienne tâches en retard',
-                    Icons.task_alt_outlined,
-                    _reminderTasksEnabled,
-                    (value) async {
-                      await _notificationService.setReminderTasksEnabled(value);
-                      setState(() => _reminderTasksEnabled = value);
-                    },
-                  ),
-                  const Divider(height: 24),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, color: Colors.grey[400], size: 24),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                   // Header Custom
+                   Container(
+                     width: double.infinity,
+                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                     decoration: BoxDecoration(
+                       gradient: LinearGradient(
+                         colors: [
+                           const Color(0xFF1B365D).withOpacity(0.1),
+                           const Color(0xFFB41E3A).withOpacity(0.1),
+                         ],
+                         begin: Alignment.topLeft,
+                         end: Alignment.bottomRight,
+                       ),
+                       borderRadius: const BorderRadius.only(
+                         bottomLeft: Radius.circular(24),
+                         bottomRight: Radius.circular(24),
+                       ),
+                     ),
+                     child: const Column(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       children: [
+                         Text(
+                           'CONFIGURATION',
+                           style: TextStyle(
+                             fontSize: 11,
+                             fontWeight: FontWeight.w600,
+                             color: Color(0xFF52606D),
+                             letterSpacing: 1.2,
+                           ),
+                         ),
+                         const SizedBox(height: 6),
+                         Text(
+                           'Administration',
+                           style: TextStyle(
+                             fontSize: 28,
+                             fontWeight: FontWeight.bold,
+                             color: Color(0xFF1B365D),
+                           ),
+                         ),
+                       ],
+                     ),
+                   ),
+                   
+                   Expanded(
+                     child: ListView(
+                       padding: const EdgeInsets.all(20),
+                       children: [
+                         Text(
+                           'Gérez l\'équipe et les paramètres système.',
+                           style: TextStyle(
+                             fontSize: 15,
+                             color: Colors.grey[600],
+                           ),
+                         ),
+                         const SizedBox(height: 32),
+            
+                        // QR Code Section
+                        const Text(
+                          'QR Code Visiteurs',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const QrDisplayScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.qr_code),
+                            label: const Text('Afficher le QR Code'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'À afficher à l\'entrée de l\'église pour que les visiteurs s\'enregistrent.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 32),
+                        
+                        // Communication Section
+                        const Text(
+                          'Communication',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSettingsCard(
+                          child: ListTile(
+                            leading: const Icon(Icons.message_outlined, color: AppTheme.primaryColor),
+                            title: const Text('Templates WhatsApp'),
+                            subtitle: const Text('Gérer les modèles de messages'),
+                            trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const TemplatesScreen()),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSettingsCard(
+                          child: ListTile(
+                            leading: const Icon(Icons.security, color: AppTheme.accentOrange),
+                            title: const Text('Journal d\'Audit'),
+                            subtitle: const Text('Voir l\'historique des actions'),
+                            trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const AuditLogScreen()),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        
+                        // Synchronisation Status
+                        const SyncIndicator(),
+                        const SizedBox(height: 32),
+                        
+                        // Team Section
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
-                              'Heure de notification',
-                              style: TextStyle(fontWeight: FontWeight.w500),
+                              'Membres de l\'équipe',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            Text(
-                              'Notifications quotidiennes à ${_notificationHour}h00',
-                              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                            TextButton(
+                              onPressed: _showAddMemberDialog,
+                              child: const Text('Ajouter'),
                             ),
                           ],
                         ),
-                      ),
-                      DropdownButton<int>(
-                        value: _notificationHour,
-                        items: List.generate(24, (i) => i).map((hour) {
-                          return DropdownMenuItem(
-                            value: hour,
-                            child: Text('${hour}h'),
-                          );
-                        }).toList(),
-                        onChanged: (value) async {
-                          if (value != null) {
-                            await _notificationService.setNotificationHour(value);
-                            setState(() => _notificationHour = value);
-                          }
-                        },
-                      ),
-                    ],
-                  ),
+                        const SizedBox(height: 16),
+                        
+                        // Team List
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: StreamBuilder<List<TeamMember>>(
+                            stream: FirebaseService.getTeamStream(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(24),
+                                  child: Center(child: CircularProgressIndicator()),
+                                );
+                              }
+                              
+                              final members = snapshot.data ?? [];
+                              
+                              if (members.isEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Center(
+                                    child: Text(
+                                      'Aucun membre',
+                                      style: TextStyle(color: Colors.grey[400]),
+                                    ),
+                                  ),
+                                );
+                              }
+                              
+                              return Column(
+                                children: members.map((member) {
+                                  return _TeamMemberTile(member: member);
+                                }).toList(),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        
+                        // Auto Message Section
+                        const Text(
+                          'Message Automatique',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: _isLoadingMessage
+                              ? const Center(child: CircularProgressIndicator())
+                              : TextField(
+                                  controller: _messageController,
+                                  maxLines: 5,
+                                  decoration: InputDecoration(
+                                    hintText: 'Message d\'accueil automatique...',
+                                    filled: true,
+                                    fillColor: AppTheme.backgroundGrey,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isSaving ? null : _saveMessage,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _isSaving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Enregistrer les modifications',
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        
+                        // Sync Status
+                        Row(
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: const BoxDecoration(
+                                color: AppTheme.accentGreen,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Synchronisation Firebase',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  _lastSync != null
+                                      ? 'Dernière synchro : il y a ${DateTime.now().difference(_lastSync!).inMinutes} min'
+                                      : 'Synchronisé',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              onPressed: () {
+                                setState(() => _lastSync = DateTime.now());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Synchronisation effectuée')),
+                                );
+                              },
+                              icon: Icon(Icons.refresh, color: Colors.grey[400]),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        
+                        // Notification Settings Section
+                        const Text(
+                          'Notifications',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _buildNotificationSwitch(
+                                'Activer les notifications',
+                                'Recevoir toutes les notifications',
+                                Icons.notifications_outlined,
+                                _notificationsEnabled,
+                                (value) async {
+                                  await _notificationService.setNotificationsEnabled(value);
+                                  setState(() => _notificationsEnabled = value);
+                                },
+                              ),
+                              const Divider(height: 24),
+                              _buildNotificationSwitch(
+                                'Rappel J+3',
+                                'Notification 3 jours après inscription',
+                                Icons.calendar_today_outlined,
+                                _reminderJ3Enabled,
+                                (value) async {
+                                  await _notificationService.setReminderJ3Enabled(value);
+                                  setState(() => _reminderJ3Enabled = value);
+                                },
+                              ),
+                              const Divider(height: 24),
+                              _buildNotificationSwitch(
+                                'Rappel tâches',
+                                'Notification quotidienne tâches en retard',
+                                Icons.task_alt_outlined,
+                                _reminderTasksEnabled,
+                                (value) async {
+                                  await _notificationService.setReminderTasksEnabled(value);
+                                  setState(() => _reminderTasksEnabled = value);
+                                },
+                              ),
+                              const Divider(height: 24),
+                              Row(
+                                children: [
+                                  Icon(Icons.access_time, color: Colors.grey[400], size: 24),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Heure de notification',
+                                          style: TextStyle(fontWeight: FontWeight.w500),
+                                        ),
+                                        Text(
+                                          'Notifications quotidiennes à ${_notificationHour}h00',
+                                          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  DropdownButton<int>(
+                                    value: _notificationHour,
+                                    items: List.generate(24, (i) => i).map((hour) {
+                                      return DropdownMenuItem(
+                                        value: hour,
+                                        child: Text('${hour}h'),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) async {
+                                      if (value != null) {
+                                        await _notificationService.setNotificationHour(value);
+                                        setState(() => _notificationHour = value);
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                       ],
+                     ),
+                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -606,9 +671,9 @@ class _AdminScreenState extends State<AdminScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),

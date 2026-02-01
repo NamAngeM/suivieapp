@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'integration_step.dart';
 
 class Visitor {
   final String id;
@@ -15,7 +16,8 @@ class Visitor {
   final bool recevoirActualites;
   final DateTime dateEnregistrement;
   final String statut;
-  final Map<String, DateTime?> integrationSteps;
+  final Map<String, DateTime?> integrationSteps; // Legacy support
+  final List<IntegrationStep> integrationPath; // New system
   final String? assignedMemberId;
 
   Visitor({
@@ -33,12 +35,8 @@ class Visitor {
     required this.recevoirActualites,
     required this.dateEnregistrement,
     this.statut = 'nouveau',
-    this.integrationSteps = const {
-      'accueil': null,
-      'contact': null,
-      'groupe_maison': null,
-      'bapteme': null,
-    },
+    this.integrationSteps = const {},
+    this.integrationPath = const [],
     this.assignedMemberId,
   });
 
@@ -54,13 +52,59 @@ class Visitor {
 
   factory Visitor.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    
+    // Legacy steps handling
     final steps = data['integrationSteps'] as Map<String, dynamic>? ?? {};
     final integrationSteps = {
       'accueil': (steps['accueil'] as Timestamp?)?.toDate(),
       'contact': (steps['contact'] as Timestamp?)?.toDate(),
       'groupe_maison': (steps['groupe_maison'] as Timestamp?)?.toDate(),
       'bapteme': (steps['bapteme'] as Timestamp?)?.toDate(),
+      'dons': (steps['dons'] as Timestamp?)?.toDate(),
+      'service': (steps['service'] as Timestamp?)?.toDate(),
     };
+
+    // New path handling
+    List<IntegrationStep> path = [];
+    if (data['integrationPath'] != null) {
+      path = (data['integrationPath'] as List)
+          .map((item) => IntegrationStep.fromMap(item as Map<String, dynamic>))
+          .toList();
+    } else {
+      // Migration: Build path from legacy map if new path is empty
+      path = [
+        IntegrationStep(
+            id: 'accueil', 
+            title: 'Accueil', 
+            status: integrationSteps['accueil'] != null ? StepStatus.completed : StepStatus.completed, // Toujours complété si visiteur créé
+            updatedAt: integrationSteps['accueil'] ?? (data['dateEnregistrement'] as Timestamp?)?.toDate()),
+        IntegrationStep(
+            id: 'contact', 
+            title: 'Premier Contact', 
+            status: integrationSteps['contact'] != null ? StepStatus.completed : StepStatus.inProgress, // En cours par défaut
+            updatedAt: integrationSteps['contact']),
+        IntegrationStep(
+            id: 'groupe_maison', 
+            title: 'Groupe de Maison', 
+            status: integrationSteps['groupe_maison'] != null ? StepStatus.completed : StepStatus.locked,
+            updatedAt: integrationSteps['groupe_maison']),
+        IntegrationStep(
+            id: 'bapteme', 
+            title: 'Baptême / Affermissement', 
+            status: integrationSteps['bapteme'] != null ? StepStatus.completed : StepStatus.locked,
+            updatedAt: integrationSteps['bapteme']),
+        IntegrationStep(
+            id: 'dons', 
+            title: 'Découverte des Dons', 
+            status: integrationSteps['dons'] != null ? StepStatus.completed : StepStatus.locked,
+            updatedAt: integrationSteps['dons']),
+        IntegrationStep(
+            id: 'service', 
+            title: 'Service / Département', 
+            status: integrationSteps['service'] != null ? StepStatus.completed : StepStatus.locked,
+            updatedAt: integrationSteps['service']),
+      ];
+    }
 
     return Visitor(
       id: doc.id,
@@ -78,6 +122,7 @@ class Visitor {
       dateEnregistrement: (data['dateEnregistrement'] as Timestamp?)?.toDate() ?? DateTime.now(),
       statut: data['statut'] ?? 'nouveau',
       integrationSteps: integrationSteps,
+      integrationPath: path,
       assignedMemberId: data['assignedMemberId'],
     );
   }
@@ -98,6 +143,7 @@ class Visitor {
       'dateEnregistrement': Timestamp.fromDate(dateEnregistrement),
       'statut': statut,
       'integrationSteps': integrationSteps.map((key, value) => MapEntry(key, value != null ? Timestamp.fromDate(value) : null)),
+      'integrationPath': integrationPath.map((s) => s.toMap()).toList(),
       'assignedMemberId': assignedMemberId,
     };
   }
@@ -118,6 +164,7 @@ class Visitor {
     DateTime? dateEnregistrement,
     String? statut,
     Map<String, DateTime?>? integrationSteps,
+    List<IntegrationStep>? integrationPath,
     String? assignedMemberId,
   }) {
     return Visitor(
@@ -136,6 +183,7 @@ class Visitor {
       dateEnregistrement: dateEnregistrement ?? this.dateEnregistrement,
       statut: statut ?? this.statut,
       integrationSteps: integrationSteps ?? this.integrationSteps,
+      integrationPath: integrationPath ?? this.integrationPath,
       assignedMemberId: assignedMemberId ?? this.assignedMemberId,
     );
   }

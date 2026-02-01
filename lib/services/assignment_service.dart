@@ -26,6 +26,7 @@ class AssignmentService {
       id: '',
       visitorId: visitor.id,
       visitorName: visitor.nomComplet,
+      visitorPhone: visitor.telephone,
       description: 'Télephone',
       dateEcheance: DateTime.now().add(const Duration(days: 2)), // J+2 par défaut
       assignedTo: selectedMember.id,

@@ -3,12 +3,15 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../config/theme.dart';
 import '../models/visitor.dart';
-import '../models/visitor.dart';
 import '../services/firebase_service.dart';
+import '../services/whatsapp_service.dart';
+import '../models/interaction.dart';
 import 'visitor_details_screen.dart';
 
 class VisitorsListScreen extends StatefulWidget {
-  const VisitorsListScreen({super.key});
+  final VoidCallback? onAddVisitor;
+  
+  const VisitorsListScreen({super.key, this.onAddVisitor});
 
   @override
   State<VisitorsListScreen> createState() => _VisitorsListScreenState();
@@ -22,8 +25,10 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
   String? _selectedQuartier;
   String? _selectedStatut;
   DateTimeRange? _selectedDateRange;
-  final List<String> _quartiers = ['Soa', 'Mimboman', 'Essos', 'Biyem-Assi', 'Autre']; // TODO: Dynamique
-  final List<String> _statuts = ['nouveau', 'membre', 'visiteur_regulier'];
+  final List<String> _quartiers = ['Angondjé', 'Akanda', 'Nzeng Ayong', 'Okala', 'PK8', 'Charbonnages'];
+  final List<String> _statuts = ['nouveau', 'contacte', 'fidele'];
+  
+  final _whatsappService = WhatsappService();
 
   @override
   void dispose() {
@@ -31,18 +36,50 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
     super.dispose();
   }
 
-  Future<void> _openWhatsApp(String phone) async {
-    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
-    final url = Uri.parse('https://wa.me/$cleanPhone');
+  Future<void> _openWhatsApp(Visitor visitor) async {
+    // On utilise le service pour la cohérence des numéros
+    await _whatsappService.openWhatsApp(visitor.telephone, "Bonjour ${visitor.nomComplet}, ravis de vous avoir accueilli à ZOE Church !");
+    
+    FirebaseService.addInteraction(Interaction(
+      id: '',
+      visitorId: visitor.id,
+      type: 'whatsapp',
+      content: 'WhatsApp envoyé depuis la liste',
+      date: DateTime.now(),
+      authorId: FirebaseService.currentUser?.id ?? 'current_user',
+      authorName: FirebaseService.currentUser?.nom ?? 'Moi',
+    ));
+  }
+
+  Future<void> _makeCall(Visitor visitor) async {
+    final url = Uri.parse('tel:${visitor.telephone}');
     if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
+      await launchUrl(url);
+      FirebaseService.addInteraction(Interaction(
+        id: '',
+        visitorId: visitor.id,
+        type: 'call',
+        content: 'Appel lancé depuis la liste',
+        date: DateTime.now(),
+        authorId: FirebaseService.currentUser?.id ?? 'current_user',
+        authorName: FirebaseService.currentUser?.nom ?? 'Moi',
+      ));
     }
   }
 
-  Future<void> _makeCall(String phone) async {
-    final url = Uri.parse('tel:$phone');
+  Future<void> _sendSMS(String phone, String visitorId) async {
+    final url = Uri.parse('sms:$phone');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
+      FirebaseService.addInteraction(Interaction(
+        id: '',
+        visitorId: visitorId,
+        type: 'sms',
+        content: 'SMS lancé depuis la liste',
+        date: DateTime.now(),
+        authorId: FirebaseService.currentUser?.id ?? 'current_user',
+        authorName: FirebaseService.currentUser?.nom ?? 'Moi',
+      ));
     }
   }
 
@@ -58,155 +95,241 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: Colors.transparent, // Transparent for gradient
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF8F9FA), Color(0xFFF0F4F8)],
+          ),
+        ),
+        child: Stack(
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(20),
+            // Watermark
+            Positioned.fill(
+              child: Center(
+                child: Opacity(
+                  opacity: 0.03,
+                  child: Icon(
+                    Icons.church,
+                    size: 300,
+                    color: AppTheme.zoeBlue,
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Visiteurs',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+                  // Header Custom
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF1B365D).withOpacity(0.1),
+                          const Color(0xFFB41E3A).withOpacity(0.1),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(24),
+                        bottomRight: Radius.circular(24),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Visiteurs',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1B365D),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Search Bar
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: (value) => setState(() => _searchQuery = value),
+                                decoration: const InputDecoration(
+                                  hintText: 'Rechercher (Nom, Tél...)',
+                                  prefixIcon: Icon(Icons.search, color: Color(0xFFB41E3A)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppTheme.zoeBlue, width: 0.5),
+                              ),
+                              child: IconButton(
+                                icon: const Icon(Icons.tune),
+                                color: AppTheme.zoeBlue,
+                                onPressed: () {
+                                  _showFilterSheet();
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Search Bar
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppTheme.backgroundGrey,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (value) => setState(() => _searchQuery = value),
-                            decoration: InputDecoration(
-                              hintText: 'Rechercher (Nom, Tél...)',
-                              hintStyle: TextStyle(color: Colors.grey[400]),
-                              prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  
+                  const SizedBox(height: 12),
+                  // Quick Filters
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          FilterChip(
+                            label: const Text('Première visite'),
+                            selected: _selectedStatut == 'nouveau',
+                            onSelected: (selected) {
+                              setState(() => _selectedStatut = selected ? 'nouveau' : null);
+                            },
+                            backgroundColor: Colors.white,
+                            selectedColor: const Color(0xFF1B365D).withOpacity(0.1),
+                            labelStyle: TextStyle(
+                              color: _selectedStatut == 'nouveau' ? AppTheme.primaryColor : AppTheme.textSecondary,
+                              fontSize: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                color: _selectedStatut == 'nouveau' ? AppTheme.primaryColor : Colors.grey.shade200,
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          if (_quartiers.isNotEmpty)
+                             FilterChip(
+                              label: Text(_quartiers.first),
+                              selected: _selectedQuartier == _quartiers.first,
+                              onSelected: (selected) {
+                                setState(() => _selectedQuartier = selected ? _quartiers.first : null);
+                              },
+                              backgroundColor: Colors.white,
+                              selectedColor: AppTheme.primaryColor.withOpacity(0.1),
+                              labelStyle: TextStyle(
+                                color: _selectedQuartier == _quartiers.first ? AppTheme.primaryColor : AppTheme.textSecondary,
+                                fontSize: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide(
+                                  color: _selectedQuartier == _quartiers.first ? AppTheme.primaryColor : Colors.grey.shade200,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.backgroundGrey,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.tune),
-                          color: Colors.grey[600],
-                          onPressed: () {
-                            _showFilterSheet();
+                    ),
+                  ),
+                  
+                  // List
+                  Expanded(
+                    child: StreamBuilder<List<Visitor>>(
+                      stream: FirebaseService.getVisitorsStream(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+                                const SizedBox(height: 16),
+                                Text('Erreur: ${snapshot.error}'),
+                              ],
+                            ),
+                          );
+                        }
+                        
+                        final visitors = snapshot.data ?? [];
+                        final filteredVisitors = visitors.where((v) {
+                          bool matchesSearch = true;
+                          if (_searchQuery.isNotEmpty) {
+                            final query = _searchQuery.toLowerCase();
+                            matchesSearch = v.nomComplet.toLowerCase().contains(query) ||
+                                   v.quartier.toLowerCase().contains(query) ||
+                                   v.telephone.contains(query);
+                          }
+
+                          bool matchesQuartier = _selectedQuartier == null || v.quartier == _selectedQuartier;
+                          bool matchesStatut = _selectedStatut == null || v.statut == _selectedStatut;
+                          
+                          bool matchesDate = true;
+                          if (_selectedDateRange != null) {
+                            matchesDate = v.dateEnregistrement.isAfter(_selectedDateRange!.start) &&
+                                v.dateEnregistrement.isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
+                          }
+
+                          return matchesSearch && matchesQuartier && matchesStatut && matchesDate;
+                        }).toList();
+                        
+                        if (filteredVisitors.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.people_outline, size: 64, color: Colors.grey[300]),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _searchQuery.isEmpty 
+                                      ? 'Aucun visiteur enregistré' 
+                                      : 'Aucun résultat',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: filteredVisitors.length,
+                          itemBuilder: (context, index) {
+                            final visitor = filteredVisitors[index];
+                            return _VisitorCard(
+                              visitor: visitor,
+                              onWhatsApp: () => _openWhatsApp(visitor),
+                              onSMS: () => _sendSMS(visitor.telephone, visitor.id),
+                              onCall: () => _makeCall(visitor),
+                              onDetails: () => _showVisitorDetails(visitor),
+                            );
                           },
-                        ),
-                      ),
-                    ],
+                        );
+                      },
+                    ),
                   ),
                 ],
-              ),
-            ),
-            // List
-            Expanded(
-              child: StreamBuilder<List<Visitor>>(
-                stream: FirebaseService.getVisitorsStream(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
-                          const SizedBox(height: 16),
-                          Text('Erreur: ${snapshot.error}'),
-                        ],
-                      ),
-                    );
-                  }
-                  
-                  final visitors = snapshot.data ?? [];
-                  final filteredVisitors = visitors.where((v) {
-                    bool matchesSearch = true;
-                    if (_searchQuery.isNotEmpty) {
-                      final query = _searchQuery.toLowerCase();
-                      matchesSearch = v.nomComplet.toLowerCase().contains(query) ||
-                             v.quartier.toLowerCase().contains(query) ||
-                             v.telephone.contains(query);
-                    }
-
-                    bool matchesQuartier = _selectedQuartier == null || v.quartier == _selectedQuartier;
-                    bool matchesStatut = _selectedStatut == null || v.statut == _selectedStatut;
-                    
-                    bool matchesDate = true;
-                    if (_selectedDateRange != null) {
-                      matchesDate = v.dateEnregistrement.isAfter(_selectedDateRange!.start) &&
-                          v.dateEnregistrement.isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
-                    }
-
-                    return matchesSearch && matchesQuartier && matchesStatut && matchesDate;
-                  }).toList();
-                  
-                  if (filteredVisitors.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.people_outline, size: 64, color: Colors.grey[300]),
-                          const SizedBox(height: 16),
-                          Text(
-                            _searchQuery.isEmpty 
-                                ? 'Aucun visiteur enregistré' 
-                                : 'Aucun résultat',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: filteredVisitors.length,
-                    itemBuilder: (context, index) {
-                      final visitor = filteredVisitors[index];
-                      return _VisitorCard(
-                        visitor: visitor,
-                        onWhatsApp: () => _openWhatsApp(visitor.telephone),
-                        onCall: () => _makeCall(visitor.telephone),
-                        onDetails: () => _showVisitorDetails(visitor),
-                      );
-                    },
-                  );
-                },
               ),
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/');
-        },
+        onPressed: widget.onAddVisitor ?? () => Navigator.pushNamed(context, '/'),
         backgroundColor: AppTheme.primaryColor,
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -338,12 +461,14 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
 class _VisitorCard extends StatelessWidget {
   final Visitor visitor;
   final VoidCallback onWhatsApp;
+  final VoidCallback onSMS;
   final VoidCallback onCall;
   final VoidCallback onDetails;
 
   const _VisitorCard({
     required this.visitor,
     required this.onWhatsApp,
+    required this.onSMS,
     required this.onCall,
     required this.onDetails,
   });
@@ -353,6 +478,11 @@ class _VisitorCard extends StatelessWidget {
     final dateFormatted = DateFormat('d MMM.', 'fr_FR').format(visitor.dateEnregistrement);
     final avatarColor = AppTheme.getAvatarColor(visitor.nomComplet);
     
+    // Calcul progression
+    final totalSteps = visitor.integrationPath.length;
+    final completedSteps = visitor.integrationPath.where((s) => s.status.name == 'completed').length;
+    final progress = totalSteps > 0 ? completedSteps / totalSteps : 0.0;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -361,7 +491,7 @@ class _VisitorCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -371,24 +501,39 @@ class _VisitorCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Avatar
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: avatarColor.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    visitor.initials,
-                    style: TextStyle(
-                      color: avatarColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+              // Avatar avec Indicateur de Progression
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 54, 
+                    height: 54,
+                    child: CircularProgressIndicator(
+                      value: progress,
+                      backgroundColor: Colors.grey.shade100,
+                      color: AppTheme.accentGreen,
+                      strokeWidth: 3,
                     ),
                   ),
-                ),
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: avatarColor.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        visitor.initials,
+                        style: TextStyle(
+                          color: avatarColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(width: 12),
               // Info
@@ -398,12 +543,16 @@ class _VisitorCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          visitor.nomComplet,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
+                        Expanded(
+                          child: Text(
+                            visitor.nomComplet,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textPrimary,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -434,7 +583,9 @@ class _VisitorCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           // Actions
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _ActionButton(
                 icon: Icons.chat_bubble_outline,
@@ -442,14 +593,18 @@ class _VisitorCard extends StatelessWidget {
                 color: AppTheme.accentGreen,
                 onTap: onWhatsApp,
               ),
-              const SizedBox(width: 8),
+              _ActionButton(
+                icon: Icons.sms_outlined,
+                label: 'SMS',
+                color: Colors.blue,
+                onTap: onSMS,
+              ),
               _ActionButton(
                 icon: Icons.phone_outlined,
-                label: 'Appeler',
+                label: 'Appel',
                 color: AppTheme.textSecondary,
                 onTap: onCall,
               ),
-              const SizedBox(width: 8),
               _ActionButton(
                 icon: Icons.info_outline,
                 label: 'Détails',
@@ -507,4 +662,3 @@ class _ActionButton extends StatelessWidget {
     );
   }
 }
-

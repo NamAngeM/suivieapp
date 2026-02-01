@@ -81,204 +81,269 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : RefreshIndicator(
-                onRefresh: _loadStats,
-                child: ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    // Header
-                    const Text(
-                      'Statistiques',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Aperçu de la croissance et de l\'impact.',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // KPIs Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _KpiCard(
-                            label: 'Total Visiteurs\n(Mois)',
-                            value: '${_stats?['visitorsThisMonth'] ?? 0}',
-                            color: AppTheme.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _KpiCard(
-                            label: 'Taux de\nRétention',
-                            value: '${_stats?['retentionRate'] ?? 0}%',
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _KpiCard(
-                            label: 'Demandes\nPrière',
-                            value: '${_stats?['prayerRequests'] ?? 0}',
-                            color: AppTheme.accentOrange,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Objectifs Section
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Objectifs',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: _updateGoal,
-                          child: const Text('Modifier'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildGoalCard(),
-                    const SizedBox(height: 32),
-                    
-                    // Growth Chart
-                    const Text(
-                      'Croissance',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Nouveaux Visiteurs (12 sem.)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 180,
-                      child: _buildLineChart(),
-                    ),
-                    const SizedBox(height: 32),
-                    
-                    // Distribution Section
-                    const Text(
-                      'Répartition',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    
-                    // Source distribution
-                    const Text(
-                      'Source d\'invitation',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildSourceLegend(),
-                    const SizedBox(height: 24),
-                    
-                    // Par Quartier
-                    const Text(
-                      'Par Quartier',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 120,
-                      child: _buildQuartierChart(),
-                    ),
-                    const SizedBox(height: 32),
-                    
-                    // Exports
-                    const Text(
-                      'Exports',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ReportsScreen(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.picture_as_pdf),
-                        label: const Text('Rapports PDF & Exports'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Export en cours...')),
-                          );
-                        },
-                        icon: Icon(Icons.table_chart_outlined, color: Colors.grey[600]),
-                        label: Text(
-                          'Exporter base de données',
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: BorderSide(color: Colors.grey[300]!),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                  ],
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF8F9FA), Color(0xFFF0F4F8)],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Watermark
+            Positioned.fill(
+              child: Center(
+                child: Opacity(
+                  opacity: 0.03,
+                  child: Icon(
+                    Icons.church,
+                    size: 300,
+                    color: AppTheme.zoeBlue,
+                  ),
                 ),
               ),
+            ),
+            SafeArea(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                      children: [
+                        // Header Custom
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF1B365D).withOpacity(0.1),
+                                const Color(0xFFB41E3A).withOpacity(0.1),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(24),
+                              bottomRight: Radius.circular(24),
+                            ),
+                          ),
+                          child: const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'DASHBOARD',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF52606D),
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Statistiques',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1B365D),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: _loadStats,
+                            child: ListView(
+                              padding: const EdgeInsets.all(20),
+                              children: [
+                                Text(
+                                  'Aperçu de la croissance et de l\'impact.',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                    
+                                // KPIs Row
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _KpiCard(
+                                        label: 'Total Visiteurs\n(Mois)',
+                                        value: '${_stats?['visitorsThisMonth'] ?? 0}',
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _KpiCard(
+                                        label: 'Taux de\nRétention',
+                                        value: '${_stats?['retentionRate'] ?? 0}%',
+                                        color: AppTheme.primaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _KpiCard(
+                                        label: 'Demandes\nPrière',
+                                        value: '${_stats?['prayerRequests'] ?? 0}',
+                                        color: AppTheme.accentOrange,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 32),
+
+                                // Objectifs Section
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Objectifs',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: _updateGoal,
+                                      child: const Text('Modifier'),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildGoalCard(),
+                                const SizedBox(height: 32),
+                                
+                                // Growth Chart
+                                const Text(
+                                  'Croissance',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Nouveaux Visiteurs (12 sem.)',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  height: 180,
+                                  child: _buildLineChart(),
+                                ),
+                                const SizedBox(height: 32),
+                                
+                                // Distribution Section
+                                const Text(
+                                  'Répartition',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                
+                                // Source distribution
+                                const Text(
+                                  'Source d\'invitation',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildSourceLegend(),
+                                const SizedBox(height: 24),
+                                
+                                // Par Quartier
+                                const Text(
+                                  'Par Quartier',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  height: 120,
+                                  child: _buildQuartierChart(),
+                                ),
+                                const SizedBox(height: 32),
+                                
+                                // Exports
+                                const Text(
+                                  'Exports',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const ReportsScreen(),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.picture_as_pdf),
+                                    label: const Text('Rapports PDF & Exports'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.primaryColor,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Export en cours...')),
+                                      );
+                                    },
+                                    icon: Icon(Icons.table_chart_outlined, color: Colors.grey[600]),
+                                    label: Text(
+                                      'Exporter base de données',
+                                      style: TextStyle(color: Colors.grey[600]),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      side: BorderSide(color: Colors.grey[300]!),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -430,7 +495,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 4),
           ),
         ],
       ),

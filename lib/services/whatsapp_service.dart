@@ -21,24 +21,59 @@ class WhatsappService {
 
   Future<void> openWhatsApp(String phone, String message) async {
     // Nettoyage basique
-    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
-    
-    // Ajout indicatif par défaut si manquant (suppose Gabon par défaut, +241)
-    // TODO: Rendre configurable ou basé sur la locale
-    if (!cleanPhone.startsWith('+') && !cleanPhone.startsWith('00')) {
-      if (cleanPhone.length == 10) {
-        // Format local 10 chiffres? ou 9 avec O devant
-        cleanPhone = '+241$cleanPhone';
-      } else if (cleanPhone.length == 8) {
-         // Format standard Gabon (8 chiffres sans le 0 ou ancien?)
-         // Note: Gabon est passé à 9 chiffres (0 + 8 chiffres) en 2019
-         // Si l'utilisateur met 8 chiffres, on suppose qu'il manque le préfixe
-        cleanPhone = '+241$cleanPhone';
-      } else if (cleanPhone.length == 9) {
-        // Format actuel 9 chiffres (ex: 066...)
-        // Le visiteur saisit "066 85 18 18", on retire le 0 pour WhatsApp: +241 66...
-        cleanPhone = '+241${cleanPhone.substring(1)}'; 
+    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), ''); // Ne garde que les chiffres
+
+    // Gère le format local Gabon (06..., 07...) vers +241
+    if (cleanPhone.startsWith('0') && cleanPhone.length == 9) {
+      // Ex: 062030405 -> +24162030405
+      cleanPhone = '241${cleanPhone.substring(1)}';
+    } else if (cleanPhone.startsWith('241')) {
+      // Déjà 241
+    } else if (cleanPhone.length == 8) {
+      // Ancien format ou sans le 0 -> ajoute 241
+      cleanPhone = '241$cleanPhone';
+    } else {
+      // Autre (suppose déjà format international ou autre pays)
+      // Si pas d'indicatif, on force le 241 par défaut si < 9 chiffres ?
+      if (cleanPhone.length <= 9 && !cleanPhone.startsWith('241')) {
+         cleanPhone = '241$cleanPhone';
       }
+    }
+    
+    // WhatsApp demande format sans +, juste les chiffres pays + tel
+    // Mais wa.me accepte aussi, cependant la doc dit 'Use international format ... omit zeroes, brackets or dashes ... do not use leading +'.
+    // Wait, wa.me wants: https://wa.me/24166000000 (No +)
+    // Verification: https://faq.whatsapp.com/5913398998672934 => "Use: https://wa.me/15551234567" (No +).
+    
+    // Donc cleanPhone doit être: 241xxxxxxxxx
+    if (cleanPhone.startsWith('+')) cleanPhone = cleanPhone.substring(1);
+    
+    // Safety check final: si ça ne marche pas, WhatsApp web propose de vérifier le numéro.
+    // Pour le Gabon: 241 + (8 chiffres). Le 0 initial du format 9 chiffres doit virer.
+    // Logic above:
+    // Input: 074556677 (9 digits) -> remove 0 -> 74556677 -> add 241 -> 24174556677. Correct.
+    // Input: +241074556677 -> handled? RegExp removed +. -> 241074556677. Not handled by 'startsWith 0'.
+    // We should be careful about pre-formatted numbers.
+    // Refined logic:
+    // 1. Strip all non-digits.
+    // 2. If starts with 241: check next digit. if 0, remove it? (Gabon specific? usually formatted as +241 07...)
+    //    Actually, let's keep it simple. If starts with 0 and length 9 => replace 0 with 241.
+    
+    // Mise à jour robuste :
+    cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    if (cleanPhone.startsWith('0') && cleanPhone.length == 9) {
+      cleanPhone = '241${cleanPhone.substring(1)}';
+    } else if (!cleanPhone.startsWith('241')) {
+       // Si ne commence pas par 241, on ajoute 241 (sauf si semble être un autre code pays long? Non, on force Gabon pour l'app locale)
+       cleanPhone = '241$cleanPhone';
+    }
+    // Si commence par 241, on laisse tel quel.
+    
+    // Correction spécifique: si le user a entré 24106... (avec le 0), il faut virer le 0 après le 241 ?
+    // WhatsApp n'aime pas le 0 après le code pays.
+    if (cleanPhone.startsWith('2410')) {
+      cleanPhone = '241${cleanPhone.substring(4)}';
     }
     
     final url = Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}');

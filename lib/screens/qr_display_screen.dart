@@ -59,25 +59,41 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
     }
     
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('QR Code Visiteurs'),
-        backgroundColor: Colors.white,
-        foregroundColor: AppTheme.textPrimary,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.fullscreen),
-            onPressed: _toggleFullscreen,
-            tooltip: 'Plein écran',
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF8F9FA), Color(0xFFF0F4F8)],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
+        ),
+        child: Stack(
+          children: [
+            // Watermark
+            Positioned.fill(
+              child: Center(
+                child: Opacity(
+                  opacity: 0.03,
+                  child: Icon(
+                    Icons.qr_code_scanner,
+                    size: 350,
+                    color: AppTheme.zoeBlue,
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Column(
+                children: [
+                  // Custom Header
+                  _buildHeader(context),
+                  
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        children: [
               const SizedBox(height: 20),
               
               // Titre
@@ -170,24 +186,75 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
               ),
               const SizedBox(height: 32),
               
-              // Bouton plein écran
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _toggleFullscreen,
-                  icon: const Icon(Icons.tv),
-                  label: const Text('Mode Tablette / Affichage'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(10, 10, 20, 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF1B365D).withOpacity(0.1),
+            const Color(0xFFB41E3A).withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: AppTheme.zoeBlue, size: 20),
+            onPressed: () => Navigator.pop(context),
+          ),
+          const SizedBox(width: 4),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ENREGISTREMENT',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF52606D),
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'QR Code Visiteurs',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1B365D),
                 ),
               ),
             ],
           ),
-        ),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.fullscreen, color: AppTheme.zoeBlue),
+            onPressed: _toggleFullscreen,
+            tooltip: 'Plein écran',
+          ),
+        ],
       ),
     );
   }

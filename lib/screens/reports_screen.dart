@@ -122,47 +122,131 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Rapports & Exports'),
-        backgroundColor: Colors.white,
-        foregroundColor: AppTheme.textPrimary,
-        elevation: 0,
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF8F9FA), Color(0xFFF0F4F8)],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Watermark
+            Positioned.fill(
+              child: Center(
+                child: Opacity(
+                  opacity: 0.03,
+                  child: Icon(
+                    Icons.church,
+                    size: 300,
+                    color: AppTheme.zoeBlue,
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Column(
+                children: [
+                  // Custom Header
+                  _buildHeader(context, 'Rapports & Exports', 'ANALYTICS'),
+                  
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        // Section Génération
+                        const Text(
+                          'Générer un rapport',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildActionCard(
+                          title: 'Rapport Mensuel',
+                          description: 'Statistiques complètes, graphiques et liste des visiteurs de ce mois.',
+                          icon: Icons.calendar_month,
+                          color: AppTheme.primaryColor,
+                          onTap: () => _generateReport(isMonthly: true),
+                          isLoading: _isGenerating,
+                        ),
+                        const SizedBox(height: 32),
+                        
+                        // Section Historique
+                        const Text(
+                          'Historique récent',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ..._history.map((month) => _buildHistoryItem(month)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, String title, String subtitle) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(10, 10, 20, 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF1B365D).withOpacity(0.1),
+            const Color(0xFFB41E3A).withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
+      child: Row(
         children: [
-          // Section Génération
-          const Text(
-            'Générer un rapport',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
-            ),
+          IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: AppTheme.zoeBlue, size: 20),
+            onPressed: () => Navigator.pop(context),
           ),
-          const SizedBox(height: 16),
-          _buildActionCard(
-            title: 'Rapport Mensuel',
-            description: 'Statistiques complètes, graphiques et liste des visiteurs de ce mois.',
-            icon: Icons.calendar_month,
-            color: AppTheme.primaryColor,
-            onTap: () => _generateReport(isMonthly: true),
-            isLoading: _isGenerating,
+          const SizedBox(width: 4),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                subtitle.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textSecondary.withOpacity(0.7),
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1B365D),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 32),
-          
-          // Section Historique
-          const Text(
-            'Historique récent',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ..._history.map((month) => _buildHistoryItem(month)),
         ],
       ),
     );

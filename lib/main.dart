@@ -73,13 +73,19 @@ class MainNavigator extends StatefulWidget {
 class _MainNavigatorState extends State<MainNavigator> {
   int _selectedIndex = 0;
   
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const VisitorsListScreen(),
-    const FollowUpScreen(),
-    const StatisticsScreen(),
-    const AdminScreen(),
-  ];
+  late List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      const HomeScreen(),
+      VisitorsListScreen(onAddVisitor: () => setState(() => _selectedIndex = 0)),
+      const FollowUpScreen(),
+      const StatisticsScreen(),
+      const AdminScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
