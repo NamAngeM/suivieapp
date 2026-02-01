@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "754522100331",
+    "project_id": "suivi-ames-app",
+    "storage_bucket": "suivi-ames-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:754522100331:android:7762f98b3bf0287731972e",
+        "android_client_info": {
+          "package_name": "com.zoechurch.zoe_church_visitors"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOfCvfpnKOTK7gksBHxqc6bYA_39Nl50w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

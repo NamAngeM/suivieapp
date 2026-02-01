@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Règle par défaut : tout est bloqué si non connecté
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Collection Visitors : Sécurisée
+    match /visitors/{visitor} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null; // Ou allow create: if true; si on veut permettre l'ajout public sans lecture
+      allow update, delete: if request.auth != null;
+    }
+  }
+}
