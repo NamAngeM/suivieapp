@@ -67,7 +67,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle, color: AppTheme.accentGreen, size: 48),
+                const Icon(Icons.check_circle, color: AppTheme.zoeBlue, size: 48),
                 const SizedBox(height: 16),
                 Text(
                   'Rapport généré !',
@@ -336,6 +336,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       decoration: BoxDecoration(
         color: AppTheme.backgroundGrey,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.zoeBlue.withOpacity(0.1)),
       ),
       child: Row(
         children: [

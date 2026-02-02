@@ -39,10 +39,21 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Nombre de visiteurs visé',
-            border: OutlineInputBorder(),
-          ),
+            decoration: InputDecoration(
+              labelText: 'Nombre de visiteurs visé',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppTheme.zoeBlue, width: 2),
+              ),
+            ),
         ),
         actions: [
           TextButton(

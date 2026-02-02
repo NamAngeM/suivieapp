@@ -22,16 +22,7 @@ class IntegrationTimelineWidget extends StatelessWidget {
       children: [
         _buildProgressBar(context),
         const SizedBox(height: 24),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: visitor.integrationPath.length,
-          itemBuilder: (context, index) {
-            final step = visitor.integrationPath[index];
-            final isLast = index == visitor.integrationPath.length - 1;
-            return _buildStepItem(context, step, isLast);
-          },
-        ),
+        _buildGroupedTimeline(context),
       ],
     );
   }
@@ -95,6 +86,55 @@ class IntegrationTimelineWidget extends StatelessWidget {
     );
   }
 
+  Widget _buildGroupedTimeline(BuildContext context) {
+    final groupedSteps = <String, List<IntegrationStep>>{};
+    for (var step in visitor.integrationPath) {
+      final phase = step.phase.isEmpty ? 'Général' : step.phase;
+      groupedSteps.putIfAbsent(phase, () => []).add(step);
+    }
+
+    return Column(
+      children: groupedSteps.entries.map((entry) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: AppTheme.zoeBlue,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    entry.key.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.zoeBlue,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ...entry.value.asMap().entries.map((stepEntry) {
+              final step = stepEntry.value;
+              final isLastInPhase = stepEntry.key == entry.value.length - 1;
+              final isLastInTotal = step.id == visitor.integrationPath.last.id;
+              return _buildStepItem(context, step, isLastInTotal);
+            }).toList(),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
   String _getProgressLabel(int percentage) {
     if (percentage == 100) return 'Membre Actif & Engagé ! 🎉';
     if (percentage >= 80) return 'Presque arrivé !';
@@ -125,7 +165,7 @@ class IntegrationTimelineWidget extends StatelessWidget {
                       width: 2,
                     ),
                     boxShadow: step.status == StepStatus.inProgress
-                        ? [BoxShadow(color: AppTheme.primaryColor.withOpacity(0.3), blurRadius: 8)]
+                        ? [BoxShadow(color: AppTheme.zoeBlue.withOpacity(0.3), blurRadius: 8)]
                         : null,
                   ),
                   child: Center(
@@ -164,6 +204,14 @@ class IntegrationTimelineWidget extends StatelessWidget {
                             : AppTheme.textPrimary,
                       ),
                     ),
+                    if (step.subtitle != null)
+                      Text(
+                        step.subtitle!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
                     const SizedBox(height: 4),
                     _buildStatusBadge(step),
                     if (step.updatedAt != null)
@@ -218,7 +266,7 @@ class IntegrationTimelineWidget extends StatelessWidget {
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ListTile(
-              leading: const Icon(Icons.check_circle, color: AppTheme.accentGreen),
+              leading: const Icon(Icons.check_circle, color: AppTheme.zoeBlue),
               title: const Text('Marquer comme terminé'),
               onTap: () {
                 Navigator.pop(context);
@@ -254,7 +302,7 @@ class IntegrationTimelineWidget extends StatelessWidget {
     switch (step.status) {
       case StepStatus.completed:
         label = 'Complété';
-        color = AppTheme.accentGreen;
+        color = AppTheme.zoeBlue;
         break;
       case StepStatus.inProgress:
         label = 'En cours';
@@ -280,7 +328,7 @@ class IntegrationTimelineWidget extends StatelessWidget {
 
   Color _getStatusColor(StepStatus status) {
     switch (status) {
-      case StepStatus.completed: return AppTheme.accentGreen;
+      case StepStatus.completed: return AppTheme.zoeBlue;
       case StepStatus.inProgress: return Colors.white;
       case StepStatus.locked: return Colors.grey.shade200;
     }
@@ -288,7 +336,7 @@ class IntegrationTimelineWidget extends StatelessWidget {
 
   Color _getStatusBorderColor(StepStatus status) {
     switch (status) {
-      case StepStatus.completed: return AppTheme.accentGreen;
+      case StepStatus.completed: return AppTheme.zoeBlue;
       case StepStatus.inProgress: return AppTheme.accentOrange;
       case StepStatus.locked: return Colors.grey.shade400;
     }

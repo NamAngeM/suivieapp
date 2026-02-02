@@ -73,36 +73,102 @@ class Visitor {
     } else {
       // Migration: Build path from legacy map if new path is empty
       path = [
+        // PHASE 1: CONNEXION
         IntegrationStep(
-            id: 'accueil', 
-            title: 'Accueil', 
-            status: integrationSteps['accueil'] != null ? StepStatus.completed : StepStatus.completed, // Toujours complété si visiteur créé
-            updatedAt: integrationSteps['accueil'] ?? (data['dateEnregistrement'] as Timestamp?)?.toDate()),
+          id: 'connexion_appel',
+          title: 'Appel de Bienvenue',
+          subtitle: 'J+1: Remercier et écouter',
+          phase: 'Phase 1: Connexion',
+          status: integrationSteps['contact'] != null ? StepStatus.completed : StepStatus.inProgress,
+          updatedAt: integrationSteps['contact'],
+        ),
         IntegrationStep(
-            id: 'contact', 
-            title: 'Premier Contact', 
-            status: integrationSteps['contact'] != null ? StepStatus.completed : StepStatus.inProgress, // En cours par défaut
-            updatedAt: integrationSteps['contact']),
+          id: 'connexion_pack',
+          title: 'Pack de Bienvenue',
+          subtitle: 'Envoi WhatsApp brochure numérique',
+          phase: 'Phase 1: Connexion',
+          status: StepStatus.locked,
+        ),
         IntegrationStep(
-            id: 'groupe_maison', 
-            title: 'Groupe de Maison', 
-            status: integrationSteps['groupe_maison'] != null ? StepStatus.completed : StepStatus.locked,
-            updatedAt: integrationSteps['groupe_maison']),
+          id: 'connexion_adresse',
+          title: 'Vérification adresse',
+          subtitle: 'Confirmer le quartier pour orientation',
+          phase: 'Phase 1: Connexion',
+          status: StepStatus.locked,
+        ),
+
+        // PHASE 2: APPROFONDISSEMENT
         IntegrationStep(
-            id: 'bapteme', 
-            title: 'Baptême / Affermissement', 
-            status: integrationSteps['bapteme'] != null ? StepStatus.completed : StepStatus.locked,
-            updatedAt: integrationSteps['bapteme']),
+          id: 'approf_groupe',
+          title: 'Groupe de Maison',
+          subtitle: 'Mise en contact responsable quartier',
+          phase: 'Phase 2: Approfondissement',
+          status: integrationSteps['groupe_maison'] != null ? StepStatus.completed : StepStatus.locked,
+          updatedAt: integrationSteps['groupe_maison'],
+        ),
         IntegrationStep(
-            id: 'dons', 
-            title: 'Découverte des Dons', 
-            status: integrationSteps['dons'] != null ? StepStatus.completed : StepStatus.locked,
-            updatedAt: integrationSteps['dons']),
+          id: 'approf_cafe',
+          title: 'Café des Nouveaux',
+          subtitle: 'Rencontre informelle avec responsables',
+          phase: 'Phase 2: Approfondissement',
+          status: StepStatus.locked,
+        ),
         IntegrationStep(
-            id: 'service', 
-            title: 'Service / Département', 
-            status: integrationSteps['service'] != null ? StepStatus.completed : StepStatus.locked,
-            updatedAt: integrationSteps['service']),
+          id: 'approf_rappel',
+          title: 'Rappel 2ème Dimanche',
+          subtitle: 'Message d\'invitation le samedi soir',
+          phase: 'Phase 2: Approfondissement',
+          status: StepStatus.locked,
+        ),
+
+        // PHASE 3: SPIRITUELLE
+        IntegrationStep(
+          id: 'spirit_affermit',
+          title: 'Classes d\'Affermissement',
+          subtitle: 'Inscription cycle bases de la foi',
+          phase: 'Phase 3: Spirituelle',
+          status: integrationSteps['bapteme'] != null ? StepStatus.completed : StepStatus.locked,
+          updatedAt: integrationSteps['bapteme'],
+        ),
+        IntegrationStep(
+          id: 'spirit_bapteme',
+          title: 'Entretien Baptême',
+          subtitle: 'Rendez-vous avec diacre ou pasteur',
+          phase: 'Phase 3: Spirituelle',
+          status: StepStatus.locked,
+        ),
+        IntegrationStep(
+          id: 'spirit_priere',
+          title: 'Suivi Requêtes Prière',
+          subtitle: 'Évolution de la situation',
+          phase: 'Phase 3: Spirituelle',
+          status: StepStatus.locked,
+        ),
+
+        // PHASE 4: ENGAGEMENT
+        IntegrationStep(
+          id: 'engag_dons',
+          title: 'Test des Dons',
+          subtitle: 'Découverte des talents spirituels',
+          phase: 'Phase 4: Engagement',
+          status: integrationSteps['dons'] != null ? StepStatus.completed : StepStatus.locked,
+          updatedAt: integrationSteps['dons'],
+        ),
+        IntegrationStep(
+          id: 'engag_depts',
+          title: 'Présentation Départements',
+          subtitle: 'Tour d\'horizon des ministères',
+          phase: 'Phase 4: Engagement',
+          status: integrationSteps['service'] != null ? StepStatus.completed : StepStatus.locked,
+          updatedAt: integrationSteps['service'],
+        ),
+        IntegrationStep(
+          id: 'engag_entrevue',
+          title: 'Entrevue d\'Intégration',
+          subtitle: 'De Visiteur à Membre',
+          phase: 'Phase 4: Engagement',
+          status: StepStatus.locked,
+        ),
       ];
     }
 

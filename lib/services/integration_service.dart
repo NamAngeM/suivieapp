@@ -58,12 +58,18 @@ class IntegrationService {
   ];
   
   static const Map<String, String> stepLabels = {
-    'accueil': 'Accueil',
-    'contact': 'Premier Contact',
-    'groupe_maison': 'Groupe de Maison',
-    'bapteme': 'Baptême',
-    'dons': 'Découverte des Dons',
-    'service': 'Intégration Département',
+    'connexion_appel': 'Appel de Bienvenue',
+    'connexion_pack': 'Pack de Bienvenue',
+    'connexion_adresse': 'Vérification Adresse',
+    'approf_groupe': 'Groupe de Maison',
+    'approf_cafe': 'Café des Nouveaux',
+    'approf_rappel': 'Rappel Dimanche',
+    'spirit_affermit': 'Affermissement',
+    'spirit_bapteme': 'Entretien Baptême',
+    'spirit_priere': 'Suivi Prière',
+    'engag_dons': 'Test des Dons',
+    'engag_depts': 'Départements',
+    'engag_entrevue': 'Intégration Membre',
   };
 
   bool canValidateStep(Visitor visitor, String stepId) {

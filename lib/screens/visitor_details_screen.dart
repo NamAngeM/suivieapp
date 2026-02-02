@@ -10,6 +10,9 @@ import '../services/firebase_service.dart';
 import '../services/whatsapp_service.dart';
 import '../models/integration_step.dart';
 import '../widgets/integration_timeline.dart';
+import '../widgets/whatsapp_template_sheet.dart';
+import '../services/assignment_service.dart';
+import '../models/team_member.dart';
 
 class VisitorDetailsScreen extends StatefulWidget {
   final Visitor visitor;
@@ -26,12 +29,85 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
   final _integrationService = IntegrationService();
   final _whatsappService = WhatsappService();
   bool _isLoading = false;
+  String? _assignedToName;
 
   @override
   void initState() {
     super.initState();
     _visitor = widget.visitor;
     _tabController = TabController(length: 2, vsync: this);
+    _loadAssignedMember();
+  }
+
+  Future<void> _loadAssignedMember() async {
+    if (_visitor.assignedMemberId != null && _visitor.assignedMemberId!.isNotEmpty) {
+      final member = await FirebaseService.getTeamMember(_visitor.assignedMemberId!);
+      if (mounted && member != null) {
+        setState(() => _assignedToName = member.nom);
+      } else if (mounted) {
+        setState(() => _assignedToName = null);
+      }
+    } else if (mounted) {
+      setState(() => _assignedToName = null);
+    }
+  }
+
+  Future<void> _showAssignmentDialog() async {
+    final teamStream = FirebaseService.getTeamStream();
+    final team = await teamStream.first;
+    
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Affecter un responsable'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: team.length,
+            itemBuilder: (context, index) {
+              final member = team[index];
+              final isCurrent = member.id == _visitor.assignedMemberId;
+              
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: AppTheme.zoeBlue.withOpacity(0.1),
+                  child: Text(member.initials, style: const TextStyle(color: AppTheme.zoeBlue, fontSize: 12)),
+                ),
+                title: Text(member.nom),
+                subtitle: Text(member.role),
+                trailing: isCurrent ? const Icon(Icons.check_circle, color: AppTheme.zoeBlue) : null,
+                onTap: () async {
+                  Navigator.pop(context);
+                  setState(() => _isLoading = true);
+                  
+                  final assignmentService = AssignmentService();
+                  await assignmentService.manuallyAssignVisitor(_visitor, member.id);
+                  
+                  // Recharger le visiteur et l'UI
+                  final updatedVisitor = await FirebaseService.getVisitor(_visitor.id);
+                  if (mounted && updatedVisitor != null) {
+                    setState(() {
+                      _visitor = updatedVisitor;
+                      _isLoading = false;
+                    });
+                    _loadAssignedMember();
+                  }
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('ANNULER'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -65,113 +141,7 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
   }
 
   Future<void> _showWhatsAppTemplates() async {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.6,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: StreamBuilder<List<MessageTemplate>>(
-          stream: FirebaseService.getMessageTemplatesStream(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Center(child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Text('Erreur de chargement des modèles: ${snapshot.error}'),
-              ));
-            }
-
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            
-            final templates = snapshot.data ?? [];
-            final allTemplates = templates;
-
-            return Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Choisir un modèle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                      IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: allTemplates.length,
-                    itemBuilder: (context, index) {
-                      final t = allTemplates[index];
-                      return ListTile(
-                        leading: const Icon(Icons.chat_bubble_outline, color: AppTheme.accentGreen),
-                        title: Text(t.title),
-                        subtitle: t.content.isNotEmpty 
-                            ? Text(t.content, maxLines: 1, overflow: TextOverflow.ellipsis)
-                            : const Text('Ouvrir WhatsApp sans message prédéfini'),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _whatsappService.sendTemplateMessage(_visitor, t);
-                          FirebaseService.addInteraction(Interaction(
-                            id: '',
-                            visitorId: _visitor.id,
-                            type: 'whatsapp',
-                            content: 'WhatsApp: ${t.title}',
-                            date: DateTime.now(),
-                            authorId: FirebaseService.currentUser?.id ?? 'current_user',
-                            authorName: FirebaseService.currentUser?.nom ?? 'Moi',
-                          ));
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const Divider(),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Text('MESSAGES DIRECTS', style: TextStyle(
-                    fontSize: 10, 
-                    fontWeight: FontWeight.bold, 
-                    color: Colors.grey,
-                    letterSpacing: 1.1,
-                  )),
-                ),
-                // Quick WhatsApp option
-                ListTile(
-                  leading: const Icon(Icons.chat_bubble_outline, color: AppTheme.accentGreen),
-                  title: const Text('Message WhatsApp'),
-                  subtitle: const Text('Ouvrir WhatsApp sans modèle'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _whatsappService.openWhatsApp(_visitor.telephone, "");
-                  },
-                ),
-                // Quick SMS option
-                ListTile(
-                  leading: const Icon(Icons.sms_outlined, color: Colors.blue),
-                  title: const Text('Message SMS'),
-                  subtitle: const Text('Envoyer un SMS classique'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _sendSMS(_visitor.telephone);
-                  },
-                ),
-                const SizedBox(height: 20),
-              ],
-            );
-          },
-        ),
-      ),
-    );
+    WhatsAppTemplateSheet.show(context, _visitor);
   }
 
   // _toggleStep removed (replaced by IntegrationTimelineWidget logic)
@@ -333,10 +303,6 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
             children: [
               Expanded(
                 child: TextField(
-                  decoration: const InputDecoration(
-                    hintText: 'Ajouter une note...',
-                    border: InputBorder.none,
-                  ),
                   onSubmitted: (value) {
                     if (value.isNotEmpty) {
                       FirebaseService.addInteraction(Interaction(
@@ -345,11 +311,27 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
                         type: 'note',
                         content: value,
                         date: DateTime.now(),
-                        authorId: 'current_user',
-                        authorName: 'Moi',
+                        authorId: FirebaseService.currentUser?.id ?? 'current_user',
+                        authorName: FirebaseService.currentUser?.nom ?? 'Moi',
                       ));
                     }
                   },
+                  decoration: InputDecoration(
+                    hintText: 'Ajouter une note...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppTheme.zoeBlue, width: 2),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
                 ),
               ),
               IconButton(
@@ -437,6 +419,33 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
+                    if (_assignedToName != null || (FirebaseService.currentUser?.isAdmin ?? false))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: InkWell(
+                          onTap: (FirebaseService.currentUser?.isAdmin ?? false) 
+                              ? _showAssignmentDialog 
+                              : null,
+                          child: Row(
+                            children: [
+                              Icon(Icons.person_outline, size: 14, color: AppTheme.zoeBlue),
+                              const SizedBox(width: 4),
+                              Text(
+                                _assignedToName != null ? 'Assigné à : $_assignedToName' : 'Non assigné',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.zoeBlue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (FirebaseService.currentUser?.isAdmin ?? false) ...[
+                                const SizedBox(width: 4),
+                                const Icon(Icons.edit, size: 12, color: AppTheme.zoeBlue),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -445,7 +454,7 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
                 onPressed: () => _makeCall(_visitor.telephone), 
               ),
               IconButton(
-                icon: const Icon(Icons.chat, color: AppTheme.accentGreen),
+                icon: const Icon(Icons.chat, color: AppTheme.zoeBlue),
                 onPressed: _showWhatsAppTemplates,
               ),
             ],

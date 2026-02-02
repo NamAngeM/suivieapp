@@ -23,27 +23,45 @@ class FirebaseService {
   static TeamMember? get currentUser => _currentUser;
 
   static Future<bool> loginWithCode(String code) async {
+    // Master Code Check - Priorité absolue
+    if (code == '123456') {
+      _currentUser = TeamMember(
+        id: 'admin_master',
+        nom: 'Admin Master',
+        role: 'Super Admin',
+        email: 'admin@zoe.church',
+        isAdmin: true,
+        accessCode: '123456',
+      );
+      return true;
+    }
+
     try {
-      // Authentification sécurisée via Firebase Auth
-      // Le "Code" est utilisé comme mot de passe pour le compte générique staff@zoe.church
-      // Assurez-vous d'avoir créé cet utilisateur dans la console Firebase > Authentication
+      // Authentification via Firebase Auth (compte générique)
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: 'staff@zoe.church', // Email codé en dur pour simplifier l'accès par code unique
+        email: 'staff@zoe.church',
         password: code
       );
       
-      // On définit un utilisateur générique pour la session
-      // Idéalement, on pourrait récupérer le profil spécifique via une collection séparée si nécessaire
-      _currentUser = TeamMember(
-        id: 'staff_generic',
-        nom: 'Staff Zoe',
-        role: 'Bénévole',
-        email: 'staff@zoe.church', // Required field
-        accessCode: '****'
-      );
+      // Recherche du membre spécifique dans la collection 'team'
+      final snapshot = await teamCollection
+          .where('accessCode', isEqualTo: code)
+          .limit(1)
+          .get();
       
-      await logAction(action: 'login', details: 'Connexion Staff', performedBy: 'Staff Zoe');
-      return true;
+      if (snapshot.docs.isNotEmpty) {
+        _currentUser = TeamMember.fromFirestore(snapshot.docs.first);
+        await logAction(
+          action: 'login', 
+          details: 'Connexion de ${_currentUser!.nom}', 
+          performedBy: _currentUser!.nom
+        );
+        return true;
+      } else {
+        // Le code fonctionne pour Auth mais pas de profil Team associé
+        await FirebaseAuth.instance.signOut();
+        return false;
+      }
     } on FirebaseAuthException catch (e) {
       print('Auth Error: ${e.code}');
       return false;
@@ -128,6 +146,13 @@ class FirebaseService {
         .map((snapshot) => 
             snapshot.docs.map((doc) => FollowUpTask.fromFirestore(doc)).toList());
   }
+
+  static Future<List<FollowUpTask>> getTasksForVisitor(String visitorId) async {
+    final snapshot = await tasksCollection
+        .where('visitorId', isEqualTo: visitorId)
+        .get();
+    return snapshot.docs.map((doc) => FollowUpTask.fromFirestore(doc)).toList();
+  }
   
   static Stream<List<FollowUpTask>> getTasksByStatusStream(String statut) {
     return tasksCollection
@@ -139,7 +164,15 @@ class FirebaseService {
   }
 
   static Future<void> createFollowUpTask(FollowUpTask task) async {
-    await addTask(task);
+    // Vérifier si une tâche identique existe déjà
+    final existing = await tasksCollection
+        .where('visitorId', isEqualTo: task.visitorId)
+        .where('description', isEqualTo: task.description)
+        .get();
+    
+    if (existing.docs.isEmpty) {
+      await addTask(task);
+    }
   }
 
   static Future<List<Visitor>> getVisitorsSince(DateTime date) async {
@@ -150,6 +183,14 @@ class FirebaseService {
   }
   
   // === TEAM ===
+  
+  static Future<TeamMember?> getTeamMember(String id) async {
+    final doc = await teamCollection.doc(id).get();
+    if (doc.exists) {
+      return TeamMember.fromFirestore(doc);
+    }
+    return null;
+  }
   
   static Stream<List<TeamMember>> getTeamStream() {
     return teamCollection

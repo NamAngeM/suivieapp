@@ -7,6 +7,7 @@ import '../widgets/sync_indicator.dart';
 import 'qr_display_screen.dart';
 import 'templates_screen.dart';
 import 'audit_log_screen.dart';
+import 'login_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -60,7 +61,7 @@ class _AdminScreenState extends State<AdminScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Message enregistré !'),
-            backgroundColor: AppTheme.accentGreen,
+            backgroundColor: AppTheme.zoeBlue,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -129,7 +130,18 @@ class _AdminScreenState extends State<AdminScreen> {
               controller: codeController,
               decoration: InputDecoration(
                 labelText: 'Code d\'accès',
-                border: const OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppTheme.zoeBlue, width: 2),
+                ),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.refresh),
                   onPressed: () {
@@ -216,29 +228,46 @@ class _AdminScreenState extends State<AdminScreen> {
                          bottomRight: Radius.circular(24),
                        ),
                      ),
-                     child: const Column(
-                       crossAxisAlignment: CrossAxisAlignment.start,
-                       children: [
-                         Text(
-                           'CONFIGURATION',
-                           style: TextStyle(
-                             fontSize: 11,
-                             fontWeight: FontWeight.w600,
-                             color: Color(0xFF52606D),
-                             letterSpacing: 1.2,
-                           ),
-                         ),
-                         const SizedBox(height: 6),
-                         Text(
-                           'Administration',
-                           style: TextStyle(
-                             fontSize: 28,
-                             fontWeight: FontWeight.bold,
-                             color: Color(0xFF1B365D),
-                           ),
-                         ),
-                       ],
-                     ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'CONFIGURATION',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF52606D),
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.logout, size: 20, color: AppTheme.accentRed),
+                                onPressed: () async {
+                                  await FirebaseService.logout();
+                                  if (mounted) {
+                                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                      (route) => false,
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Administration',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1B365D),
+                            ),
+                          ),
+                        ],
+                      ),
                    ),
                    
                    Expanded(
@@ -439,7 +468,15 @@ class _AdminScreenState extends State<AdminScreen> {
                                     fillColor: AppTheme.backgroundGrey,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide.none,
+                                      borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(color: AppTheme.zoeBlue, width: 2),
                                     ),
                                   ),
                                 ),
@@ -481,7 +518,7 @@ class _AdminScreenState extends State<AdminScreen> {
                               width: 12,
                               height: 12,
                               decoration: const BoxDecoration(
-                                color: AppTheme.accentGreen,
+                                color: AppTheme.zoeBlue,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -659,7 +696,7 @@ class _AdminScreenState extends State<AdminScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppTheme.accentGreen,
+          activeColor: AppTheme.zoeBlue,
         ),
       ],
     );
@@ -725,7 +762,7 @@ class _TeamMemberTile extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  member.role,
+                  '${member.role} • #${member.accessCode}',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey[500],
@@ -747,7 +784,7 @@ class _TeamMemberTile extends StatelessWidget {
                     details: 'Membre: ${member.nom}, Dispo: $val',
                   );
                 },
-                activeColor: AppTheme.accentGreen,
+                activeColor: AppTheme.zoeBlue,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               Row(

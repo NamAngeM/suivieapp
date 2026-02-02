@@ -13,6 +13,7 @@ import 'services/notification_service.dart';
 import 'services/background_service.dart';
 import 'services/offline_service.dart';
 import 'screens/login_screen.dart';
+import 'screens/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,7 +59,7 @@ class ZoeChurchApp extends StatelessWidget {
       title: 'Zoe Church - Visiteurs',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const LoginScreen(),
+      home: const OnboardingScreen(),
     );
   }
 }

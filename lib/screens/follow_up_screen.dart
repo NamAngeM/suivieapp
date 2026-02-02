@@ -7,6 +7,9 @@ import '../services/whatsapp_service.dart';
 import '../models/interaction.dart';
 
 import '../models/visitor.dart';
+import '../services/follow_up_service.dart';
+import '../widgets/whatsapp_template_sheet.dart';
+import 'visitor_details_screen.dart';
 
 class FollowUpScreen extends StatefulWidget {
   const FollowUpScreen({super.key});
@@ -18,12 +21,26 @@ class FollowUpScreen extends StatefulWidget {
 class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _whatsappService = WhatsappService();
+  bool _isLoading = false;
+  bool _showMyTasksOnly = true;
+  Map<String, String> _memberNames = {};
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _generateAutoTasks();
+    _loadMemberNames();
+  }
+
+  Future<void> _loadMemberNames() async {
+    FirebaseService.getTeamStream().listen((members) {
+      if (mounted) {
+        setState(() {
+          _memberNames = {for (var m in members) m.id: m.nom};
+        });
+      }
+    });
   }
 
   @override
@@ -54,7 +71,7 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Tâche terminée !'),
-          backgroundColor: AppTheme.accentGreen,
+          backgroundColor: AppTheme.zoeBlue,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
@@ -62,45 +79,31 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
     }
   }
 
-  Future<void> _openWhatsApp(String phone, String visitorId, String visitorName) async {
-    await _whatsappService.openWhatsApp(phone, "Bonjour $visitorName, ravis de vous avoir accueilli à ZOE Church ! Comment allez-vous ?");
+  Future<void> _navigateToDetails(String visitorId) async {
+    setState(() => _isLoading = true);
+    final visitor = await FirebaseService.getVisitor(visitorId);
+    setState(() => _isLoading = false);
     
-    FirebaseService.addInteraction(Interaction(
-      id: '',
-      visitorId: visitorId,
-      type: 'whatsapp',
-      content: 'WhatsApp envoyé depuis Suivi',
-      date: DateTime.now(),
-      authorId: FirebaseService.currentUser?.id ?? 'current_user',
-      authorName: FirebaseService.currentUser?.nom ?? 'Moi',
-    ));
+    if (visitor != null && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => VisitorDetailsScreen(visitor: visitor)),
+      );
+    }
+  }
+
+  Future<void> _openWhatsApp(String phone, String visitorId, String visitorName) async {
+    final visitor = await FirebaseService.getVisitor(visitorId);
+    if (visitor != null && mounted) {
+      WhatsAppTemplateSheet.show(context, visitor);
+    } else {
+      // Fallback si visiteur non chargé
+      await _whatsappService.openWhatsApp(phone, "Bonjour $visitorName, ravis de vous avoir accueilli à ZOE Church !");
+    }
   }
 
   Future<void> _generateAutoTasks() async {
-    // Génération automatique des tâches pour les visiteurs < 48h
-    final now = DateTime.now();
-    final twoDaysAgo = now.subtract(const Duration(hours: 48));
-    
-    // 1. Récupérer les visiteurs récents
-    final visitors = await FirebaseService.getVisitorsSince(twoDaysAgo);
-    
-    // 2. Vérifier s'ils ont déjà une tâche
-    for (var v in visitors) {
-       // Création de la tâche
-       // Note: Idéalement vérifier unicité backend
-       await FirebaseService.createFollowUpTask(
-         FollowUpTask(
-           id: '', // Auto-generated
-           visitorId: v.id,
-           visitorName: v.nomComplet,
-           visitorPhone: v.telephone,
-           description: '📞 Contacter pour suivi (48h)',
-           dateEcheance: v.dateEnregistrement.add(const Duration(days: 2)),
-
-           statut: 'a_faire',
-         )
-       );
-    }
+    await FollowUpService.syncAutoTasks();
   }
 
   @override
@@ -131,6 +134,8 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
                 ),
               ),
             ),
+            if (_isLoading)
+              const Center(child: CircularProgressIndicator()),
             SafeArea(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,6 +168,14 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF1B365D),
                           ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            _buildFilterChip('Mes Tâches', _showMyTasksOnly, () => setState(() => _showMyTasksOnly = true)),
+                            const SizedBox(width: 8),
+                            _buildFilterChip('Toute l\'Équipe', !_showMyTasksOnly, () => setState(() => _showMyTasksOnly = false)),
+                          ],
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -314,29 +327,62 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
                     onCall: _makeCall,
                     onWhatsApp: _openWhatsApp,
                     onMarkDone: _markAsDone,
+                    onDetails: _navigateToDetails,
+                    memberNames: _memberNames,
+                    showMyTasksOnly: _showMyTasksOnly,
                   ),
                   _TaskList(
                     statut: 'en_cours',
                     onCall: _makeCall,
                     onWhatsApp: _openWhatsApp,
                     onMarkDone: _markAsDone,
+                    onDetails: _navigateToDetails,
+                    memberNames: _memberNames,
+                    showMyTasksOnly: _showMyTasksOnly,
                   ),
                   _TaskList(
                     statut: 'termine',
                     onCall: _makeCall,
                     onWhatsApp: _openWhatsApp,
                     onMarkDone: _markAsDone,
+                    onDetails: _navigateToDetails,
+                    memberNames: _memberNames,
+                    showMyTasksOnly: _showMyTasksOnly,
                     showDoneButton: false,
                   ),
                 ],
               ),
             ),
-            ],
+          ],
+        ),
+      ),
+    ],
+  ),
+),
+);
+}
+
+  Widget _buildFilterChip(String label, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.zoeBlue : Colors.white.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? Colors.transparent : AppTheme.zoeBlue.withOpacity(0.2),
           ),
         ),
-            ],
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : AppTheme.zoeBlue,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
           ),
         ),
+      ),
     );
   }
 }
@@ -346,6 +392,9 @@ class _TaskList extends StatelessWidget {
   final Function(String, String) onCall;
   final Function(String, String, String) onWhatsApp;
   final Function(FollowUpTask) onMarkDone;
+  final Function(String) onDetails;
+  final Map<String, String> memberNames;
+  final bool showMyTasksOnly;
   final bool showDoneButton;
 
   const _TaskList({
@@ -353,6 +402,9 @@ class _TaskList extends StatelessWidget {
     required this.onCall,
     required this.onWhatsApp,
     required this.onMarkDone,
+    required this.onDetails,
+    required this.memberNames,
+    required this.showMyTasksOnly,
     this.showDoneButton = true,
   });
 
@@ -366,38 +418,43 @@ class _TaskList extends StatelessWidget {
         }
         
         final tasks = snapshot.data ?? [];
-        
-        if (tasks.isEmpty) {
+        var filteredTasks = tasks;
+
+        if (showMyTasksOnly) {
+          final currentUserId = FirebaseService.currentUser?.id;
+          filteredTasks = tasks.where((t) => t.assignedTo == currentUserId).toList();
+        }
+
+        if (filteredTasks.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.task_alt, size: 64, color: Colors.grey[300]),
-                const SizedBox(height: 16),
-                Text(
-                  statut == 'termine' 
-                      ? 'Aucune tâche terminée' 
-                      : 'Aucune tâche en attente',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[500],
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                children: [
+                  Icon(Icons.assignment_turned_in_outlined, size: 64, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    showMyTasksOnly ? 'Vous n\'avez aucune tâche ici' : 'Aucune tâche dans cette catégorie',
+                    style: TextStyle(color: Colors.grey[500]),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }
         
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: tasks.length,
+          padding: const EdgeInsets.all(20),
+          itemCount: filteredTasks.length,
           itemBuilder: (context, index) {
-            final task = tasks[index];
+            final task = filteredTasks[index];
             return _TaskCard(
               task: task,
               onCall: () => onCall(task.visitorPhone, task.visitorId),
               onWhatsApp: () => onWhatsApp(task.visitorPhone, task.visitorId, task.visitorName),
               onMarkDone: () => onMarkDone(task),
+              onDetails: () => onDetails(task.visitorId),
+              assignedMemberName: task.assignedTo != null ? memberNames[task.assignedTo] : null,
               showDoneButton: showDoneButton,
             );
           },
@@ -412,6 +469,8 @@ class _TaskCard extends StatefulWidget {
   final VoidCallback onCall;
   final VoidCallback onWhatsApp;
   final VoidCallback onMarkDone;
+  final VoidCallback onDetails;
+  final String? assignedMemberName;
   final bool showDoneButton;
 
   const _TaskCard({
@@ -419,6 +478,8 @@ class _TaskCard extends StatefulWidget {
     required this.onCall,
     required this.onWhatsApp,
     required this.onMarkDone,
+    required this.onDetails,
+    this.assignedMemberName,
     this.showDoneButton = true,
   });
 
@@ -451,26 +512,27 @@ class _TaskCardState extends State<_TaskCard> {
   Widget build(BuildContext context) {
     final joursLabel = widget.task.joursRestantsLabel;
     final isOverdue = widget.task.joursRestants < 0;
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05), // Requested 0.05
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
+    return InkWell(
+      onTap: widget.onDetails,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05), // Requested 0.05
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
               // Avatar
               Container(
                 width: 48,
@@ -516,7 +578,7 @@ class _TaskCardState extends State<_TaskCard> {
                           height: 8,
                           decoration: BoxDecoration(
                             color: widget.task.statut == 'termine' 
-                                ? AppTheme.accentGreen 
+                                ? AppTheme.zoeBlue 
                                 : (isOverdue ? AppTheme.accentRed : AppTheme.accentOrange),
                             shape: BoxShape.circle,
                           ),
@@ -524,12 +586,24 @@ class _TaskCardState extends State<_TaskCard> {
                       ],
                     ),
                     Text(
-                      'Visiteur (Dimanche dernier)',
+                      widget.task.note ?? 'Parcours d\'intégration',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey[500],
                       ),
                     ),
+                    if (widget.assignedMemberName != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          'Responsable : ${widget.assignedMemberName}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.zoeBlue.withOpacity(0.8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -654,6 +728,7 @@ class _TaskCardState extends State<_TaskCard> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

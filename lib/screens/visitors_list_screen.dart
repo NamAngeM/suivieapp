@@ -7,6 +7,8 @@ import '../services/firebase_service.dart';
 import '../services/whatsapp_service.dart';
 import '../models/interaction.dart';
 import 'visitor_details_screen.dart';
+import '../widgets/whatsapp_template_sheet.dart';
+import '../models/team_member.dart';
 
 class VisitorsListScreen extends StatefulWidget {
   final VoidCallback? onAddVisitor;
@@ -28,7 +30,25 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
   final List<String> _quartiers = ['Angondjé', 'Akanda', 'Nzeng Ayong', 'Okala', 'PK8', 'Charbonnages'];
   final List<String> _statuts = ['nouveau', 'contacte', 'fidele'];
   
+  Map<String, String> _memberNames = {};
+  
   final _whatsappService = WhatsappService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMemberNames();
+  }
+
+  Future<void> _loadMemberNames() async {
+    FirebaseService.getTeamStream().listen((members) {
+      if (mounted) {
+        setState(() {
+          _memberNames = {for (var m in members) m.id: m.nom};
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -37,18 +57,7 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
   }
 
   Future<void> _openWhatsApp(Visitor visitor) async {
-    // On utilise le service pour la cohérence des numéros
-    await _whatsappService.openWhatsApp(visitor.telephone, "Bonjour ${visitor.nomComplet}, ravis de vous avoir accueilli à ZOE Church !");
-    
-    FirebaseService.addInteraction(Interaction(
-      id: '',
-      visitorId: visitor.id,
-      type: 'whatsapp',
-      content: 'WhatsApp envoyé depuis la liste',
-      date: DateTime.now(),
-      authorId: FirebaseService.currentUser?.id ?? 'current_user',
-      authorName: FirebaseService.currentUser?.nom ?? 'Moi',
-    ));
+    WhatsAppTemplateSheet.show(context, visitor);
   }
 
   Future<void> _makeCall(Visitor visitor) async {
@@ -160,9 +169,21 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
                               child: TextField(
                                 controller: _searchController,
                                 onChanged: (value) => setState(() => _searchQuery = value),
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   hintText: 'Rechercher (Nom, Tél...)',
-                                  prefixIcon: Icon(Icons.search, color: Color(0xFFB41E3A)),
+                                  prefixIcon: const Icon(Icons.search, color: Color(0xFFB41E3A)),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: AppTheme.zoeBlue, width: 2),
+                                  ),
                                 ),
                               ),
                             ),
@@ -204,13 +225,13 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
                             backgroundColor: Colors.white,
                             selectedColor: const Color(0xFF1B365D).withOpacity(0.1),
                             labelStyle: TextStyle(
-                              color: _selectedStatut == 'nouveau' ? AppTheme.primaryColor : AppTheme.textSecondary,
+                              color: _selectedStatut == 'nouveau' ? AppTheme.zoeBlue : AppTheme.textSecondary,
                               fontSize: 12,
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                               side: BorderSide(
-                                color: _selectedStatut == 'nouveau' ? AppTheme.primaryColor : Colors.grey.shade200,
+                                color: _selectedStatut == 'nouveau' ? AppTheme.zoeBlue : Colors.grey.shade200,
                               ),
                             ),
                           ),
@@ -306,15 +327,18 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
                         }
                         
                         return ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                           itemCount: filteredVisitors.length,
                           itemBuilder: (context, index) {
                             final visitor = filteredVisitors[index];
                             return _VisitorCard(
                               visitor: visitor,
+                              assignedMemberName: visitor.assignedMemberId != null 
+                                  ? _memberNames[visitor.assignedMemberId] 
+                                  : null,
                               onWhatsApp: () => _openWhatsApp(visitor),
-                              onSMS: () => _sendSMS(visitor.telephone, visitor.id),
                               onCall: () => _makeCall(visitor),
+                              onSMS: () => _sendSMS(visitor.telephone, visitor.id),
                               onDetails: () => _showVisitorDetails(visitor),
                             );
                           },
@@ -407,7 +431,7 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
                     },
                     selectedColor: AppTheme.accentGreen.withOpacity(0.1),
                     labelStyle: TextStyle(
-                      color: _selectedStatut == s ? AppTheme.accentGreen : Colors.black,
+                      color: _selectedStatut == s ? AppTheme.zoeBlue : Colors.black,
                     ),
                   )).toList(),
                 ),
@@ -460,6 +484,7 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
 
 class _VisitorCard extends StatelessWidget {
   final Visitor visitor;
+  final String? assignedMemberName;
   final VoidCallback onWhatsApp;
   final VoidCallback onSMS;
   final VoidCallback onCall;
@@ -467,6 +492,7 @@ class _VisitorCard extends StatelessWidget {
 
   const _VisitorCard({
     required this.visitor,
+    this.assignedMemberName,
     required this.onWhatsApp,
     required this.onSMS,
     required this.onCall,
@@ -511,7 +537,7 @@ class _VisitorCard extends StatelessWidget {
                     child: CircularProgressIndicator(
                       value: progress,
                       backgroundColor: Colors.grey.shade100,
-                      color: AppTheme.accentGreen,
+                      color: AppTheme.zoeBlue,
                       strokeWidth: 3,
                     ),
                   ),
@@ -561,7 +587,7 @@ class _VisitorCard extends StatelessWidget {
                           height: 8,
                           decoration: BoxDecoration(
                             color: visitor.statut == 'nouveau' 
-                                ? AppTheme.accentGreen 
+                                ? AppTheme.zoeBlue 
                                 : AppTheme.primaryColor,
                             shape: BoxShape.circle,
                           ),
@@ -576,6 +602,24 @@ class _VisitorCard extends StatelessWidget {
                         color: Colors.grey[500],
                       ),
                     ),
+                    if (assignedMemberName != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            Icon(Icons.person_outline, size: 12, color: AppTheme.zoeBlue),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Assigné à : $assignedMemberName',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.zoeBlue,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -590,7 +634,7 @@ class _VisitorCard extends StatelessWidget {
               _ActionButton(
                 icon: Icons.chat_bubble_outline,
                 label: 'WhatsApp',
-                color: AppTheme.accentGreen,
+                color: AppTheme.zoeBlue,
                 onTap: onWhatsApp,
               ),
               _ActionButton(

@@ -7,6 +7,7 @@ import '../services/notification_service.dart';
 import '../services/notification_service.dart';
 import '../services/offline_service.dart';
 import '../services/assignment_service.dart';
+import '../services/follow_up_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -92,11 +93,17 @@ class _HomeScreenState extends State<HomeScreen> {
         );
         
         // Attribuer automatiquement si souhaité
+        String? assignedMemberId;
         if (visitor.souhaiteEtreRecontacte) {
           final assignmentService = AssignmentService();
-          // On passe une copie du visiteur avec l'ID correct
-          await assignmentService.assignVisitor(visitor.copyWith(id: visitorId));
+          assignedMemberId = await assignmentService.assignVisitor(visitor.copyWith(id: visitorId));
         }
+
+        // Générer les 12 tâches de suivi (4 phases)
+        await FollowUpService.generateTasksForVisitor(
+          visitor.copyWith(id: visitorId),
+          assignedTo: assignedMemberId,
+        );
       }
       
       if (mounted) {
@@ -107,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
           SnackBar(
             content: Text(message),
             backgroundColor: offlineService.isOnline 
-                ? AppTheme.accentGreen 
+                ? AppTheme.zoeBlue 
                 : AppTheme.accentOrange,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -361,6 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.backgroundGrey,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.zoeBlue.withOpacity(0.15)),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
@@ -518,15 +526,15 @@ class _HomeScreenState extends State<HomeScreen> {
             fillColor: AppTheme.backgroundGrey,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+              borderSide: const BorderSide(color: AppTheme.zoeBlue, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -544,7 +552,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.accentGreen : AppTheme.backgroundGrey,
+          color: selected ? AppTheme.zoeBlue : AppTheme.backgroundGrey,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -577,7 +585,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppTheme.accentGreen,
+          activeColor: AppTheme.zoeBlue,
         ),
       ],
     );
