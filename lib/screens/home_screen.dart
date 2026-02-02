@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../config/theme.dart';
 import '../models/visitor.dart';
-import '../services/firebase_service.dart';
 import '../services/notification_service.dart';
 import '../services/offline_service.dart';
 import '../services/assignment_service.dart';
@@ -480,7 +479,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             title: const Text('J\'accepte d\'être recontacté(e)', style: TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: const Text('Pour prendre de vos nouvelles'),
                             value: _souhaiteEtreRecontacte,
-                            activeColor: AppTheme.zoeBlue,
+                            activeThumbColor: AppTheme.zoeBlue,
                             onChanged: (val) => setState(() => _souhaiteEtreRecontacte = val),
                           ),
                           
@@ -771,7 +770,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppTheme.zoeBlue,
+          activeThumbColor: AppTheme.zoeBlue,
         ),
       ],
     );

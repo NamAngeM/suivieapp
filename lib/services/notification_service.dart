@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -21,6 +22,8 @@ class NotificationService {
   static const int _j3ReminderId = 2000;
 
   Future<void> initialize() async {
+    if (kIsWeb) return;
+    
     // Initialiser les timezones
     tz_data.initializeTimeZones();
     

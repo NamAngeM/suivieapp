@@ -23,27 +23,58 @@ class FirebaseService {
   static TeamMember? get currentUser => _currentUser;
 
   static Future<bool> loginWithCode(String code) async {
-    // Master Code Check - Priorité absolue
-    if (code == '123456') {
-      _currentUser = TeamMember(
-        id: 'admin_master',
-        nom: 'Admin Master',
-        role: 'Super Admin',
-        email: 'admin@zoe.church',
-        isAdmin: true,
-        accessCode: '123456',
-      );
-      return true;
-    }
-
     try {
-      // Authentification via Firebase Auth (compte générique)
+      // 1. Vérifier si c'est le code Maître (Configuré dans Firestore)
+      try {
+        final securityDoc = await _firestore.collection('settings').doc('security').get();
+        String? masterCode;
+        
+        if (securityDoc.exists) {
+          masterCode = securityDoc.data()?['masterCode'];
+        } else {
+          // Pour la première installation : Fallback sur 123456 si Firestore n'est pas encore configuré
+          masterCode = '123456';
+        }
+
+        if (masterCode != null && code == masterCode) {
+           _currentUser = TeamMember(
+            id: 'admin_master',
+            nom: 'Admin Master',
+            role: 'Super Admin',
+            email: 'admin@zoe.church',
+            isAdmin: true,
+            accessCode: code,
+          );
+          await logAction(
+            action: 'login', 
+            details: 'Connexion Super Admin', 
+            performedBy: 'Admin Master'
+          );
+          return true;
+        }
+      } catch (e) {
+        // En cas d'erreur Firestore (ex: permissions), fallback de sécurité sur 123456 pour ne pas bloquer l'admin
+        if (code == '123456') {
+          _currentUser = TeamMember(
+            id: 'admin_master',
+            nom: 'Admin Master',
+            role: 'Super Admin',
+            email: 'admin@zoe.church',
+            isAdmin: true,
+            accessCode: code,
+          );
+          return true;
+        }
+        rethrow;
+      }
+
+      // 2. Authentification via Firebase Auth (compte générique)
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: 'staff@zoe.church',
         password: code
       );
       
-      // Recherche du membre spécifique dans la collection 'team'
+      // 3. Recherche du membre spécifique dans la collection 'team'
       final snapshot = await teamCollection
           .where('accessCode', isEqualTo: code)
           .limit(1)

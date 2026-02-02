@@ -151,7 +151,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                   letterSpacing: 1.2,
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                              SizedBox(height: 6),
                               Text(
                                 'Statistiques',
                                 style: TextStyle(

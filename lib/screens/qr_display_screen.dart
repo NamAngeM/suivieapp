@@ -237,7 +237,7 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
                   letterSpacing: 1.2,
                 ),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 'QR Code Visiteurs',
                 style: TextStyle(

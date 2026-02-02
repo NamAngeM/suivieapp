@@ -4,7 +4,6 @@ import '../models/team_member.dart';
 import '../services/firebase_service.dart';
 import '../services/notification_service.dart';
 import '../widgets/sync_indicator.dart';
-import 'qr_display_screen.dart';
 import 'templates_screen.dart';
 import 'audit_log_screen.dart';
 import 'login_screen.dart';
@@ -283,47 +282,6 @@ class _AdminScreenState extends State<AdminScreen> {
                          ),
                          const SizedBox(height: 32),
             
-                        // QR Code Section
-                        const Text(
-                          'QR Code Visiteurs',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const QrDisplayScreen(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.qr_code),
-                            label: const Text('Afficher le QR Code'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'À afficher à l\'entrée de l\'église pour que les visiteurs s\'enregistrent.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 32),
                         
                         // Communication Section
                         const Text(
@@ -696,7 +654,7 @@ class _AdminScreenState extends State<AdminScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppTheme.zoeBlue,
+          activeThumbColor: AppTheme.zoeBlue,
         ),
       ],
     );
@@ -784,7 +742,7 @@ class _TeamMemberTile extends StatelessWidget {
                     details: 'Membre: ${member.nom}, Dispo: $val',
                   );
                 },
-                activeColor: AppTheme.zoeBlue,
+                activeThumbColor: AppTheme.zoeBlue,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               Row(

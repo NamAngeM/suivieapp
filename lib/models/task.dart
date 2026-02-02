@@ -32,7 +32,7 @@ class FollowUpTask {
   String get joursRestantsLabel {
     final jours = joursRestants;
     if (jours < 0) {
-      return 'J${jours}';
+      return 'J$jours';
     } else if (jours == 0) {
       return "Aujourd'hui";
     } else {

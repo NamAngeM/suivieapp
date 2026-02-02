@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../config/theme.dart';
 import '../models/visitor.dart';
 import '../models/interaction.dart';
-import '../models/message_template.dart';
 import '../services/integration_service.dart';
 import '../services/firebase_service.dart';
 import '../services/whatsapp_service.dart';
@@ -12,7 +11,6 @@ import '../models/integration_step.dart';
 import '../widgets/integration_timeline.dart';
 import '../widgets/whatsapp_template_sheet.dart';
 import '../services/assignment_service.dart';
-import '../models/team_member.dart';
 
 class VisitorDetailsScreen extends StatefulWidget {
   final Visitor visitor;

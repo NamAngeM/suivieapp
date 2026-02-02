@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import '../models/integration_step.dart';
 import '../models/visitor.dart';
 import '../config/theme.dart';
-import '../services/firebase_service.dart';
 
 class IntegrationTimelineWidget extends StatelessWidget {
   final Visitor visitor;
@@ -128,7 +127,7 @@ class IntegrationTimelineWidget extends StatelessWidget {
               final isLastInPhase = stepEntry.key == entry.value.length - 1;
               final isLastInTotal = step.id == visitor.integrationPath.last.id;
               return _buildStepItem(context, step, isLastInTotal);
-            }).toList(),
+            }),
           ],
         );
       }).toList(),

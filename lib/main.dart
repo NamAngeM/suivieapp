@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
@@ -12,7 +13,6 @@ import 'screens/admin_screen.dart';
 import 'services/notification_service.dart';
 import 'services/background_service.dart';
 import 'services/offline_service.dart';
-import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
 
 void main() async {
@@ -40,12 +40,16 @@ void main() async {
   final notificationService = NotificationService();
   await notificationService.initialize();
   
-  // Initialize Background Tasks
-  await BackgroundService.initialize();
-  await BackgroundService.schedulePeriodicTasks();
+  // Initialize Background Tasks (Mobile Only)
+  if (!kIsWeb) {
+    await BackgroundService.initialize();
+    await BackgroundService.schedulePeriodicTasks();
+  }
   
-  // Schedule daily task reminder
-  await notificationService.scheduleDailyTaskReminder();
+  // Schedule daily task reminder (Mobile Only)
+  if (!kIsWeb) {
+    await notificationService.scheduleDailyTaskReminder();
+  }
   
   runApp(const ZoeChurchApp());
 }

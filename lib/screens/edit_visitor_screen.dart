@@ -470,7 +470,7 @@ class _EditVisitorScreenState extends State<EditVisitorScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppTheme.zoeBlue,
+          activeThumbColor: AppTheme.zoeBlue,
         ),
       ],
     );

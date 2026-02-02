@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // Pour kIsWeb
 import 'package:sqflite/sqflite.dart';
+// import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart'; // REMOVED for build stability
 import 'package:path/path.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -31,6 +33,12 @@ class OfflineService {
   }
 
   Future<void> _initDatabase() async {
+    if (kIsWeb) {
+      // Sur le web, on utilise pas SQLite pour l'instant (Online Only)
+      // TODO: Implémenter Hive ou SharedPreferences si besoin d'offline web
+      return;
+    }
+
     final databasesPath = await getDatabasesPath();
     final path = join(databasesPath, 'zoe_church_offline.db');
     

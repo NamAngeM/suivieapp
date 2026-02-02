@@ -7,8 +7,6 @@ import '../services/firebase_service.dart';
 import '../services/whatsapp_service.dart';
 import '../models/interaction.dart';
 import 'visitor_details_screen.dart';
-import '../widgets/whatsapp_template_sheet.dart';
-import '../models/team_member.dart';
 import 'edit_visitor_screen.dart';
 
 class VisitorsListScreen extends StatefulWidget {

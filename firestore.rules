@@ -2,6 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // Permettre la lecture du code maître pour le login
+    match /settings/security {
+      allow read: if true;
+    }
+
     // Règle par défaut : tout est bloqué si non connecté
     match /{document=**} {
       allow read, write: if request.auth != null;
@@ -10,7 +15,7 @@ service cloud.firestore {
     // Collection Visitors : Sécurisée
     match /visitors/{visitor} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null; // Ou allow create: if true; si on veut permettre l'ajout public sans lecture
+      allow create: if request.auth != null;
       allow update, delete: if request.auth != null;
     }
   }

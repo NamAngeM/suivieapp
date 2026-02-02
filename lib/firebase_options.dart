@@ -6,10 +6,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can configure this by running the FlutterFire CLI.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -34,6 +31,16 @@ class DefaultFirebaseOptions {
         );
     }
   }
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyDbXYVfRUT5G7-I504SRTfe6X3aVga2uJ8',
+    appId: '1:754522100331:web:029f9ca71695040231972e',
+    messagingSenderId: '754522100331',
+    projectId: 'suivi-ames-app',
+    authDomain: 'suivi-ames-app.firebaseapp.com',
+    storageBucket: 'suivi-ames-app.firebasestorage.app',
+    measurementId: 'G-Y99M0MS8P6',
+  );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDOfCvfpnKOTK7gksBHxqc6bYA_39Nl50w',
