@@ -139,6 +139,19 @@ class FirebaseService {
     await tasksCollection.doc(taskId).update({'note': note});
   }
   
+  static Future<List<FollowUpTask>> getTasksForVisitor(String visitorId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('tasks')
+          .where('visitorId', isEqualTo: visitorId)
+          .get();
+      return snapshot.docs.map((doc) => FollowUpTask.fromFirestore(doc)).toList();
+    } catch (e) {
+      print('Erreur getTasksForVisitor: $e');
+      return [];
+    }
+  }
+
   static Stream<List<FollowUpTask>> getTasksStream() {
     return tasksCollection
         .orderBy('dateEcheance')
@@ -147,17 +160,10 @@ class FirebaseService {
             snapshot.docs.map((doc) => FollowUpTask.fromFirestore(doc)).toList());
   }
 
-  static Future<List<FollowUpTask>> getTasksForVisitor(String visitorId) async {
-    final snapshot = await tasksCollection
-        .where('visitorId', isEqualTo: visitorId)
-        .get();
-    return snapshot.docs.map((doc) => FollowUpTask.fromFirestore(doc)).toList();
-  }
   
   static Stream<List<FollowUpTask>> getTasksByStatusStream(String statut) {
     return tasksCollection
         .where('statut', isEqualTo: statut)
-        .orderBy('dateEcheance')
         .snapshots()
         .map((snapshot) => 
             snapshot.docs.map((doc) => FollowUpTask.fromFirestore(doc)).toList());

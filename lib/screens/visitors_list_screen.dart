@@ -9,6 +9,7 @@ import '../models/interaction.dart';
 import 'visitor_details_screen.dart';
 import '../widgets/whatsapp_template_sheet.dart';
 import '../models/team_member.dart';
+import 'edit_visitor_screen.dart';
 
 class VisitorsListScreen extends StatefulWidget {
   final VoidCallback? onAddVisitor;
@@ -57,7 +58,7 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
   }
 
   Future<void> _openWhatsApp(Visitor visitor) async {
-    WhatsAppTemplateSheet.show(context, visitor);
+    await _whatsappService.openWhatsApp(visitor.telephone, '');
   }
 
   Future<void> _makeCall(Visitor visitor) async {
@@ -97,6 +98,45 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => VisitorDetailsScreen(visitor: visitor),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteVisitor(Visitor visitor) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer le visiteur ?'),
+        content: Text('Êtes-vous sûr de vouloir supprimer ${visitor.nomComplet} ? Cette action est irréversible.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('ANNULER'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('SUPPRIMER'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await FirebaseService.deleteVisitor(visitor.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Visiteur supprimé')),
+        );
+      }
+    }
+  }
+
+  void _editVisitor(Visitor visitor) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditVisitorScreen(visitor: visitor),
       ),
     );
   }
@@ -340,6 +380,8 @@ class _VisitorsListScreenState extends State<VisitorsListScreen> {
                               onCall: () => _makeCall(visitor),
                               onSMS: () => _sendSMS(visitor.telephone, visitor.id),
                               onDetails: () => _showVisitorDetails(visitor),
+                              onEdit: () => _editVisitor(visitor),
+                              onDelete: () => _confirmDeleteVisitor(visitor),
                             );
                           },
                         );
@@ -489,6 +531,8 @@ class _VisitorCard extends StatelessWidget {
   final VoidCallback onSMS;
   final VoidCallback onCall;
   final VoidCallback onDetails;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _VisitorCard({
     required this.visitor,
@@ -497,6 +541,8 @@ class _VisitorCard extends StatelessWidget {
     required this.onSMS,
     required this.onCall,
     required this.onDetails,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -526,6 +572,7 @@ class _VisitorCard extends StatelessWidget {
       child: Column(
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Avatar avec Indicateur de Progression
               Stack(
@@ -622,6 +669,37 @@ class _VisitorCard extends StatelessWidget {
                       ),
                   ],
                 ),
+              ),
+              // Menu Options
+              PopupMenuButton<String>(
+                padding: EdgeInsets.zero,
+                icon: Icon(Icons.more_vert, color: Colors.grey[400]),
+                onSelected: (value) {
+                  if (value == 'edit') onEdit();
+                  if (value == 'delete') onDelete();
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, size: 20, color: AppTheme.zoeBlue),
+                        SizedBox(width: 12),
+                        Text('Modifier'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, size: 20, color: Colors.red),
+                        SizedBox(width: 12),
+                        Text('Supprimer', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

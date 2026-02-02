@@ -5,6 +5,7 @@ import 'package:path/path.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/visitor.dart';
+import 'follow_up_service.dart';
 
 class OfflineService {
   static final OfflineService _instance = OfflineService._internal();
@@ -161,9 +162,14 @@ class OfflineService {
           dateEnregistrement: DateTime.parse(row['date_enregistrement'] as String),
         );
         
-        await FirebaseFirestore.instance
+        final docRef = await FirebaseFirestore.instance
             .collection('visitors')
             .add(visitor.toFirestore());
+
+        // Générer les tâches de suivi pour ce visiteur maintenant qu'il est synchronisé
+        await FollowUpService.generateTasksForVisitor(
+          visitor.copyWith(id: docRef.id),
+        );
         
         // Supprimer de la base locale après synchronisation réussie
         await _database!.delete(

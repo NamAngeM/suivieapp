@@ -32,8 +32,10 @@ class FollowUpService {
     ];
 
     // Récupérer les tâches existantes pour ce visiteur pour éviter les doublons
-    // Note: Pour simplifier, on pourrait aussi se baser sur une liste en cache
-    // Mais on va faire une vérification légère.
+    final existingTasks = await FirebaseService.getTasksForVisitor(visitor.id);
+    if (existingTasks.isNotEmpty) {
+      return; 
+    }
     
     for (var def in taskDefinitions) {
       final dueDate = dateReg.add(Duration(days: def.delayInDays));
