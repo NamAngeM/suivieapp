@@ -14,10 +14,18 @@ class Visitor {
   final String? requetePriere;
   final bool souhaiteEtreRecontacte;
   final bool recevoirActualites;
+  final bool baptise;
+  final bool souhaiteRejoindreGroupe;
+  final int noteExperience;
+  final List<String> pointsForts;
+  final String? commentaireLibre;
+  final String? besoinPrioritaire;
+  final bool voeuService;
+  final String? domaineSouhaite;
   final DateTime dateEnregistrement;
   final String statut;
-  final Map<String, DateTime?> integrationSteps; // Legacy support
-  final List<IntegrationStep> integrationPath; // New system
+  final Map<String, DateTime?> integrationSteps;
+  final List<IntegrationStep> integrationPath;
   final String? assignedMemberId;
 
   Visitor({
@@ -38,6 +46,15 @@ class Visitor {
     this.integrationSteps = const {},
     this.integrationPath = const [],
     this.assignedMemberId,
+    // New fields defaults
+    this.baptise = false,
+    this.souhaiteRejoindreGroupe = false,
+    this.noteExperience = 3, // Default to Satisfied
+    this.pointsForts = const [],
+    this.commentaireLibre,
+    this.besoinPrioritaire,
+    this.voeuService = false,
+    this.domaineSouhaite,
   });
 
   String get initials {
@@ -73,101 +90,72 @@ class Visitor {
     } else {
       // Migration: Build path from legacy map if new path is empty
       path = [
-        // PHASE 1: CONNEXION
+        // ÉTAPE 1: PREMIER CONTACT
         IntegrationStep(
-          id: 'connexion_appel',
-          title: 'Appel de Bienvenue',
-          subtitle: 'J+1: Remercier et écouter',
+          id: 'step_1_contact',
+          title: '1. Premier Contact',
+          subtitle: 'Appel ou message de bienvenue (J+1)',
           phase: 'Phase 1: Connexion',
           status: integrationSteps['contact'] != null ? StepStatus.completed : StepStatus.inProgress,
           updatedAt: integrationSteps['contact'],
         ),
+        
+        // ÉTAPE 2: GROUPE DE MAISON
         IntegrationStep(
-          id: 'connexion_pack',
-          title: 'Pack de Bienvenue',
-          subtitle: 'Envoi WhatsApp brochure numérique',
+          id: 'step_2_groupe',
+          title: '2. Groupe de Maison',
+          subtitle: 'Invitation à la cellule de quartier',
           phase: 'Phase 1: Connexion',
-          status: StepStatus.locked,
-        ),
-        IntegrationStep(
-          id: 'connexion_adresse',
-          title: 'Vérification adresse',
-          subtitle: 'Confirmer le quartier pour orientation',
-          phase: 'Phase 1: Connexion',
-          status: StepStatus.locked,
-        ),
-
-        // PHASE 2: APPROFONDISSEMENT
-        IntegrationStep(
-          id: 'approf_groupe',
-          title: 'Groupe de Maison',
-          subtitle: 'Mise en contact responsable quartier',
-          phase: 'Phase 2: Approfondissement',
           status: integrationSteps['groupe_maison'] != null ? StepStatus.completed : StepStatus.locked,
           updatedAt: integrationSteps['groupe_maison'],
         ),
-        IntegrationStep(
-          id: 'approf_cafe',
-          title: 'Café des Nouveaux',
-          subtitle: 'Rencontre informelle avec responsables',
-          phase: 'Phase 2: Approfondissement',
-          status: StepStatus.locked,
-        ),
-        IntegrationStep(
-          id: 'approf_rappel',
-          title: 'Rappel 2ème Dimanche',
-          subtitle: 'Message d\'invitation le samedi soir',
-          phase: 'Phase 2: Approfondissement',
-          status: StepStatus.locked,
-        ),
 
-        // PHASE 3: SPIRITUELLE
+        // ÉTAPE 3: CAFÉ DES NOUVEAUX
         IntegrationStep(
-          id: 'spirit_affermit',
-          title: 'Classes d\'Affermissement',
-          subtitle: 'Inscription cycle bases de la foi',
-          phase: 'Phase 3: Spirituelle',
+          id: 'step_3_cafe',
+          title: '3. Café des Nouveaux',
+          subtitle: 'Rencontre avec les responsables',
+          phase: 'Phase 2: Approfondissement',
+          status: StepStatus.locked,
+        ),
+        
+        // ÉTAPE 4: AFFERMISSEMENT
+        IntegrationStep(
+          id: 'step_4_afferm',
+          title: '4. Classes d\'Affermissement',
+          subtitle: 'Enseignement des bases de la foi',
+          phase: 'Phase 2: Approfondissement',
           status: integrationSteps['bapteme'] != null ? StepStatus.completed : StepStatus.locked,
           updatedAt: integrationSteps['bapteme'],
         ),
+
+        // ÉTAPE 5: BAPTÊME
         IntegrationStep(
-          id: 'spirit_bapteme',
-          title: 'Entretien Baptême',
-          subtitle: 'Rendez-vous avec diacre ou pasteur',
-          phase: 'Phase 3: Spirituelle',
-          status: StepStatus.locked,
-        ),
-        IntegrationStep(
-          id: 'spirit_priere',
-          title: 'Suivi Requêtes Prière',
-          subtitle: 'Évolution de la situation',
+          id: 'step_5_bapteme',
+          title: '5. Baptême',
+          subtitle: 'Engagement spirituel public',
           phase: 'Phase 3: Spirituelle',
           status: StepStatus.locked,
         ),
 
-        // PHASE 4: ENGAGEMENT
+        // ÉTAPE 6: DÉCOUVERTE DES DONS
         IntegrationStep(
-          id: 'engag_dons',
-          title: 'Test des Dons',
-          subtitle: 'Découverte des talents spirituels',
-          phase: 'Phase 4: Engagement',
+          id: 'step_6_dons',
+          title: '6. Découverte des Dons',
+          subtitle: 'Test de talents et orientation',
+          phase: 'Phase 3: Spirituelle',
           status: integrationSteps['dons'] != null ? StepStatus.completed : StepStatus.locked,
           updatedAt: integrationSteps['dons'],
         ),
+        
+        // ÉTAPE 7: SERVICE
         IntegrationStep(
-          id: 'engag_depts',
-          title: 'Présentation Départements',
-          subtitle: 'Tour d\'horizon des ministères',
+          id: 'step_7_service',
+          title: '7. Service & Département',
+          subtitle: 'Intégration active dans un ministère',
           phase: 'Phase 4: Engagement',
           status: integrationSteps['service'] != null ? StepStatus.completed : StepStatus.locked,
           updatedAt: integrationSteps['service'],
-        ),
-        IntegrationStep(
-          id: 'engag_entrevue',
-          title: 'Entrevue d\'Intégration',
-          subtitle: 'De Visiteur à Membre',
-          phase: 'Phase 4: Engagement',
-          status: StepStatus.locked,
         ),
       ];
     }
@@ -190,6 +178,14 @@ class Visitor {
       integrationSteps: integrationSteps,
       integrationPath: path,
       assignedMemberId: data['assignedMemberId'],
+      baptise: data['baptise'] ?? false,
+      souhaiteRejoindreGroupe: data['souhaiteRejoindreGroupe'] ?? false,
+      noteExperience: data['noteExperience'] ?? 3,
+      pointsForts: List<String>.from(data['pointsForts'] ?? []),
+      commentaireLibre: data['commentaireLibre'],
+      besoinPrioritaire: data['besoinPrioritaire'],
+      voeuService: data['voeuService'] ?? false,
+      domaineSouhaite: data['domaineSouhaite'],
     );
   }
 
@@ -211,6 +207,14 @@ class Visitor {
       'integrationSteps': integrationSteps.map((key, value) => MapEntry(key, value != null ? Timestamp.fromDate(value) : null)),
       'integrationPath': integrationPath.map((s) => s.toMap()).toList(),
       'assignedMemberId': assignedMemberId,
+      'baptise': baptise,
+      'souhaiteRejoindreGroupe': souhaiteRejoindreGroupe,
+      'noteExperience': noteExperience,
+      'pointsForts': pointsForts,
+      'commentaireLibre': commentaireLibre,
+      'besoinPrioritaire': besoinPrioritaire,
+      'voeuService': voeuService,
+      'domaineSouhaite': domaineSouhaite,
     };
   }
 
@@ -232,6 +236,14 @@ class Visitor {
     Map<String, DateTime?>? integrationSteps,
     List<IntegrationStep>? integrationPath,
     String? assignedMemberId,
+    bool? baptise,
+    bool? souhaiteRejoindreGroupe,
+    int? noteExperience,
+    List<String>? pointsForts,
+    String? commentaireLibre,
+    String? besoinPrioritaire,
+    bool? voeuService,
+    String? domaineSouhaite,
   }) {
     return Visitor(
       id: id ?? this.id,
@@ -251,6 +263,14 @@ class Visitor {
       integrationSteps: integrationSteps ?? this.integrationSteps,
       integrationPath: integrationPath ?? this.integrationPath,
       assignedMemberId: assignedMemberId ?? this.assignedMemberId,
+      baptise: baptise ?? this.baptise,
+      souhaiteRejoindreGroupe: souhaiteRejoindreGroupe ?? this.souhaiteRejoindreGroupe,
+      noteExperience: noteExperience ?? this.noteExperience,
+      pointsForts: pointsForts ?? this.pointsForts,
+      commentaireLibre: commentaireLibre ?? this.commentaireLibre,
+      besoinPrioritaire: besoinPrioritaire ?? this.besoinPrioritaire,
+      voeuService: voeuService ?? this.voeuService,
+      domaineSouhaite: domaineSouhaite ?? this.domaineSouhaite,
     );
   }
 }

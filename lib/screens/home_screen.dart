@@ -4,7 +4,6 @@ import '../config/theme.dart';
 import '../models/visitor.dart';
 import '../services/firebase_service.dart';
 import '../services/notification_service.dart';
-import '../services/notification_service.dart';
 import '../services/offline_service.dart';
 import '../services/assignment_service.dart';
 import '../services/follow_up_service.dart';
@@ -25,22 +24,33 @@ class _HomeScreenState extends State<HomeScreen> {
   final _telephoneController = TextEditingController();
   final _quartierController = TextEditingController();
   final _emailController = TextEditingController();
-  final _requetePriereController = TextEditingController();
-  
+  final _requetePriereController = TextEditingController(); // Added missing controller
+  final _commentaireController = TextEditingController(); // New
+
   // Form state
   String _sexe = 'Homme';
   String _statutMatrimonial = 'Célibataire';
-  String _commentConnu = 'Réseaux Sociaux';
+  String _commentConnu = 'Invitation';
   bool _premiereVisite = true;
   bool _souhaiteEtreRecontacte = true;
   bool _recevoirActualites = true;
   
+  // New fields state
+  bool _baptise = false;
+  bool _souhaiteRejoindreGroupe = false;
+  int _noteExperience = 3;
+  List<String> _pointsForts = [];
+  String? _besoinPrioritaire;
+  bool _voeuService = false;
+  String? _domaineSouhaite;
+  
   bool _isLoading = false;
   
   final List<String> _sourcesOptions = [
+    'Invitation',
     'Réseaux Sociaux',
-    'Ami/Famille',
     'Passant',
+    'TV / Radio',
     'Autre',
   ];
 
@@ -51,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _quartierController.dispose();
     _emailController.dispose();
     _requetePriereController.dispose();
+    _commentaireController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -77,6 +88,15 @@ class _HomeScreenState extends State<HomeScreen> {
         souhaiteEtreRecontacte: _souhaiteEtreRecontacte,
         recevoirActualites: _recevoirActualites,
         dateEnregistrement: DateTime.now(),
+        // New fields
+        baptise: _baptise,
+        souhaiteRejoindreGroupe: _souhaiteRejoindreGroupe,
+        noteExperience: _noteExperience,
+        pointsForts: _pointsForts,
+        commentaireLibre: _commentaireController.text.trim().isNotEmpty ? _commentaireController.text.trim() : null,
+        besoinPrioritaire: _besoinPrioritaire,
+        voeuService: _voeuService,
+        domaineSouhaite: _domaineSouhaite,
       );
       
       // Utiliser le service hors-ligne pour sauvegarder
@@ -144,13 +164,22 @@ class _HomeScreenState extends State<HomeScreen> {
     _quartierController.clear();
     _emailController.clear();
     _requetePriereController.clear();
+    _commentaireController.clear();
     setState(() {
       _sexe = 'Homme';
       _statutMatrimonial = 'Célibataire';
-      _commentConnu = 'Réseaux Sociaux';
+      _commentConnu = 'Invitation';
       _premiereVisite = true;
       _souhaiteEtreRecontacte = true;
       _recevoirActualites = true;
+      
+      _baptise = false;
+      _souhaiteRejoindreGroupe = false;
+      _noteExperience = 3;
+      _pointsForts = [];
+      _besoinPrioritaire = null;
+      _voeuService = false;
+      _domaineSouhaite = null;
     });
     _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
   }
@@ -238,7 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.all(20),
                         children: [
                           const Text(
-                            'Enregistrez un nouveau membre de la famille.',
+                            'Remplissez ce formulaire pour chaque nouveau visiteur.',
                             style: TextStyle(
                               fontSize: 15,
                               color: Color(0xFF52606D),
@@ -246,219 +275,255 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 32),
                           
-                          // Section Identité
-                          _buildSectionHeader('Identité', Icons.badge_outlined),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _nomController,
-                label: 'NOM COMPLET',
-                hint: 'Ex: Jean Dupont',
-                icon: Icons.person_outline,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Veuillez entrer le nom';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              
-              // Sexe
-              const Text(
-                'SEXE',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildChoiceChip('Homme', _sexe == 'Homme', () => setState(() => _sexe = 'Homme')),
-                  const SizedBox(width: 12),
-                  _buildChoiceChip('Femme', _sexe == 'Femme', () => setState(() => _sexe = 'Femme')),
-                ],
-              ),
-              const SizedBox(height: 20),
-              
-              _buildTextField(
-                controller: _telephoneController,
-                label: 'TÉLÉPHONE',
-                hint: '+225 07 08 45 12',
-                icon: Icons.phone_outlined,
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Veuillez entrer le téléphone';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 32),
-              
-              // Section Localisation & Statut
-              _buildSectionHeader('Localisation & Statut', Icons.location_on_outlined),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: _quartierController,
-                label: 'QUARTIER',
-                hint: 'Sélectionner un quartier',
-                icon: Icons.location_on_outlined,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Veuillez entrer le quartier';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              
-              // Statut Matrimonial
-              const Text(
-                'STATUT MATRIMONIAL',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: ['Célibataire', 'Marié', 'Fiancé', 'Veuf'].map((status) {
-                  return _buildChoiceChip(
-                    status, 
-                    _statutMatrimonial == status,
-                    () => setState(() => _statutMatrimonial = status),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-              
-              _buildTextField(
-                controller: _emailController,
-                label: 'E-MAIL (OPTIONNEL)',
-                hint: 'jean.dupont@email.com',
-                icon: Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 32),
-              
-              // Section Profil Spirituel
-              _buildSectionHeader('Profil Spirituel', Icons.auto_awesome_outlined),
-              const SizedBox(height: 16),
-              
-              // Comment avez-vous connu?
-              const Text(
-                'COMMENT AVEZ-VOUS CONNU ?',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: AppTheme.backgroundGrey,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.zoeBlue.withOpacity(0.15)),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _commentConnu,
-                    isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down),
-                    items: _sourcesOptions.map((source) {
-                      return DropdownMenuItem(value: source, child: Text(source));
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) setState(() => _commentConnu = value);
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              
-              // Première visite
-              _buildSwitchTile(
-                'Première visite à l\'Église ?',
-                _premiereVisite,
-                (value) => setState(() => _premiereVisite = value),
-              ),
-              const SizedBox(height: 16),
-              
-              _buildTextField(
-                controller: _requetePriereController,
-                label: 'REQUÊTE DE PRIÈRE',
-                hint: 'En quoi pouvons-nous vous accompagner en prière ?',
-                icon: Icons.favorite_outline,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 32),
-              
-              // Section Engagement
-              _buildSectionHeader('Engagement', Icons.volunteer_activism_outlined),
-              const SizedBox(height: 16),
-              
-              _buildSwitchTile(
-                'Je souhaite être recontacté par un responsable cette semaine.',
-                _souhaiteEtreRecontacte,
-                (value) => setState(() => _souhaiteEtreRecontacte = value),
-                icon: Icons.check_circle_outline,
-              ),
-              const SizedBox(height: 12),
-              _buildSwitchTile(
-                'Je souhaite recevoir les actualités de l\'Église sur WhatsApp.',
-                _recevoirActualites,
-                (value) => setState(() => _recevoirActualites = value),
-                icon: Icons.check_circle_outline,
-              ),
-              const SizedBox(height: 48),
-              
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.zoeBlue,
-                    foregroundColor: Colors.white,
-                    elevation: 8,
-                    shadowColor: AppTheme.zoeBlue.withOpacity(0.3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                          // 🔵 SECTION 1 : Identité & Contact
+                          _buildSectionHeader('Identité & Contact', Icons.badge_outlined, const Color(0xFF1B365D)),
+                          const SizedBox(height: 16),
+                          
+                          _buildTextField(
+                            controller: _nomController,
+                            label: 'NOM COMPLET',
+                            hint: 'Ex: JEAN DUPONT',
+                            icon: Icons.person_outline,
+                            textCapitalization: TextCapitalization.characters,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Veuillez entrer le nom';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          const Text(
+                            'SEXE',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(child: _buildSegmentedChoice('👨 Homme', _sexe == 'Homme', () => setState(() => _sexe = 'Homme'))),
+                              const SizedBox(width: 12),
+                              Expanded(child: _buildSegmentedChoice('👩 Femme', _sexe == 'Femme', () => setState(() => _sexe = 'Femme'))),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          
+                          _buildTextField(
+                            controller: _telephoneController,
+                            label: 'TÉLÉPHONE WHATSAPP 🇬🇦',
+                            hint: '07 08 45 12',
+                            prefixText: '+241 ',
+                            icon: Icons.phone_outlined,
+                            keyboardType: TextInputType.phone,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Téléphone requis';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          _buildTextField(
+                            controller: _quartierController,
+                            label: 'QUARTIER D\'HABITATION',
+                            hint: 'Ex: Akanda, Glass...',
+                            icon: Icons.location_on_outlined,
+                            textCapitalization: TextCapitalization.words,
+                            validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Quartier requis';
+                                }
+                                return null;
+                              },
+                          ),
+                          const SizedBox(height: 20),
+                          
+                          const Text(
+                            'STATUT MATRIMONIAL',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                          ),
+                          const SizedBox(height: 8),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: ['Célibataire', 'Marié', 'Fiancé', 'Veuf'].map((status) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: _buildChoiceChip(status, _statutMatrimonial == status, () => setState(() => _statutMatrimonial = status)),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          
+                          // 🔴 SECTION 2 : Profil & Première Visite
+                          _buildSectionHeader('Profil & Première Visite', Icons.accessibility_new, const Color(0xFFB41E3A)),
+                          const SizedBox(height: 16),
+                          
+                          _buildDropdownField(
+                            label: 'SOURCE D\'INVITATION',
+                            value: _commentConnu,
+                            items: _sourcesOptions,
+                            onChanged: (val) => setState(() => _commentConnu = val ?? _sourcesOptions[0]),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          _buildToggleRow('Première visite ?', _premiereVisite, (val) => setState(() => _premiereVisite = val)),
+                          const Divider(height: 24),
+                          _buildToggleRow('Déjà baptisé(e) ?', _baptise, (val) => setState(() => _baptise = val)),
+                          const Divider(height: 24),
+                          _buildSwitchTile('Souhaite rejoindre un Groupe de Maison', _souhaiteRejoindreGroupe, (val) => setState(() => _souhaiteRejoindreGroupe = val)),
+                          const SizedBox(height: 32),
+                          
+                          // ✨ SECTION 3 : Appréciation du Culte
+                          _buildSectionHeader('Appréciation du Culte', Icons.star_outline, Colors.amber[800]!),
+                          const SizedBox(height: 16),
+                          
+                          const Text('NOTE DE L\'EXPÉRIENCE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildEmojiRating(1, '😞', _noteExperience),
+                              _buildEmojiRating(2, '😐', _noteExperience),
+                              _buildEmojiRating(3, '🙂', _noteExperience),
+                              _buildEmojiRating(4, '😍', _noteExperience),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          
+                          const Text('POINTS FORTS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: ['Louange', 'Prédication', 'Accueil', 'Ambiance'].map((tag) {
+                              final isSelected = _pointsForts.contains(tag);
+                              return FilterChip(
+                                label: Text(tag),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      _pointsForts.add(tag);
+                                    } else {
+                                      _pointsForts.remove(tag);
+                                    }
+                                  });
+                                },
+                                selectedColor: Colors.amber[100],
+                                checkmarkColor: Colors.amber[900],
+                                labelStyle: TextStyle(color: isSelected ? Colors.amber[900] : Colors.black87),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          _buildTextField(
+                            controller: _commentaireController,
+                            label: 'COMMENTAIRE LIBRE',
+                            hint: 'Une remarque ?',
+                            maxLines: 2,
+                            icon: Icons.comment_outlined,
+                          ),
+                          const SizedBox(height: 32),
+                          
+                          // 🔥 SECTION 4 : Aspirations & Besoins
+                          _buildSectionHeader('Aspirations & Besoins', Icons.local_fire_department_outlined, Colors.deepOrange),
+                          const SizedBox(height: 16),
+                          
+                          _buildDropdownField(
+                            label: 'BESOIN PRIORITAIRE',
+                            value: _besoinPrioritaire,
+                            hint: 'Sélectionner un besoin...',
+                            items: ['Salut / Baptême', 'Guérison', 'Paix intérieure', 'Enseignement', 'Famille', 'Autre'],
+                            onChanged: (val) => setState(() => _besoinPrioritaire = val),
+                          ),
+                          const SizedBox(height: 20),
+                          
+                          CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Je souhaite mettre mes talents au service de Dieu', style: TextStyle(fontWeight: FontWeight.w500)),
+                            value: _voeuService,
+                            activeColor: Colors.deepOrange,
+                            onChanged: (val) => setState(() => _voeuService = val ?? false),
+                          ),
+                          
+                           if (_voeuService) ...[
+                             const SizedBox(height: 12),
+                             _buildDropdownField(
+                               label: 'DOMAINE SOUHAITÉ',
+                               value: _domaineSouhaite,
+                               hint: 'Choisir un domaine...',
+                               items: ['Chorale', 'Accueil', 'Technique', 'Média', 'Sécurité', 'Autre'],
+                               onChanged: (val) => setState(() => _domaineSouhaite = val),
+                             ),
+                           ],
+                           const SizedBox(height: 32),
+                          
+                          // 🙏 SECTION 5 : Accompagnement & Suivi
+                          _buildSectionHeader('Accompagnement & Suivi', Icons.handshake_outlined, AppTheme.zoeBlue),
+                          const SizedBox(height: 16),
+                          
+                          _buildTextField(
+                            controller: _requetePriereController,
+                            label: 'REQUÊTE DE PRIÈRE',
+                            hint: 'Sujet précis...',
+                            maxLines: 3,
+                            icon: Icons.favorite_border,
+                          ),
+                          const SizedBox(height: 20),
+                          
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('J\'accepte d\'être recontacté(e)', style: TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: const Text('Pour prendre de vos nouvelles'),
+                            value: _souhaiteEtreRecontacte,
+                            activeColor: AppTheme.zoeBlue,
+                            onChanged: (val) => setState(() => _souhaiteEtreRecontacte = val),
+                          ),
+                          
+                          const SizedBox(height: 48),
+                          
+                          // Submit Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _submitForm,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.zoeBlue,
+                                foregroundColor: Colors.white,
+                                elevation: 8,
+                                shadowColor: AppTheme.zoeBlue.withOpacity(0.3),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'ENREGISTRER LE VISITEUR',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
                     ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          'Enregistrer le visiteur',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 40),
-            ],
-          ),
-        ),
       ],
     ),
   ),
@@ -469,25 +534,142 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
+  Widget _buildSectionHeader(String title, IconData icon, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: Row(
         children: [
-          Icon(icon, color: AppTheme.primaryColor, size: 22),
+          Icon(icon, color: color, size: 22),
           const SizedBox(width: 10),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+              color: color,
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Divider(color: Colors.grey.withOpacity(0.2))),
+          Expanded(child: Divider(color: color.withOpacity(0.2))),
         ],
       ),
+    );
+  }
+  
+  Widget _buildSegmentedChoice(String label, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.zoeBlue : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: selected ? AppTheme.zoeBlue : Colors.grey.shade300),
+          boxShadow: selected ? [BoxShadow(color: AppTheme.zoeBlue.withOpacity(0.3), blurRadius: 4)] : [],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildEmojiRating(int value, String emoji, int groupValue) {
+    final selected = value == groupValue;
+    return GestureDetector(
+      onTap: () => setState(() => _noteExperience = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.all(selected ? 12 : 8),
+        decoration: BoxDecoration(
+          color: selected ? Colors.amber.withOpacity(0.2) : Colors.transparent,
+          shape: BoxShape.circle,
+          border: selected ? Border.all(color: Colors.amber, width: 2) : null,
+        ),
+        child: Text(
+          emoji,
+          style: TextStyle(fontSize: selected ? 32 : 24),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleRow(String title, bool value, ValueChanged<bool> onChanged) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+        Row(
+          children: [
+            _buildMinisegment('Non', !value, () => onChanged(false)),
+            const SizedBox(width: 8),
+            _buildMinisegment('Oui', value, () => onChanged(true)),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _buildMinisegment(String label, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.zoeBlue : Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.grey[600],
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    String? hint,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.backgroundGrey,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.zoeBlue.withOpacity(0.15)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: items.contains(value) ? value : null,
+              hint: hint != null ? Text(hint) : null,
+              isExpanded: true,
+              icon: const Icon(Icons.keyboard_arrow_down),
+              items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -497,6 +679,8 @@ class _HomeScreenState extends State<HomeScreen> {
     required String hint,
     IconData? icon,
     TextInputType? keyboardType,
+    String? prefixText, // New argument
+    TextCapitalization textCapitalization = TextCapitalization.none, // New argument
     int maxLines = 1,
     String? Function(String?)? validator,
   }) {
@@ -516,10 +700,12 @@ class _HomeScreenState extends State<HomeScreen> {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
           maxLines: maxLines,
           validator: validator,
           decoration: InputDecoration(
             hintText: hint,
+            prefixText: prefixText,
             hintStyle: TextStyle(color: Colors.grey[400]),
             prefixIcon: icon != null ? Icon(icon, color: Colors.grey[400]) : null,
             filled: true,

@@ -10,25 +10,26 @@ class FollowUpService {
     
     // Liste des tâches à générer avec leurs échéances
     final taskDefinitions = [
-      // PHASE 1: CONNEXION
-      _TaskDef('📞 Appel de Bienvenue (J+1)', 1, 'Phase 1'),
-      _TaskDef('📱 Envoi du Pack de Bienvenue (WhatsApp)', 1, 'Phase 1'),
-      _TaskDef('✅ Vérification de l\'adresse (Quartier)', 1, 'Phase 1'),
+      // ÉTAPE 1: PREMIER CONTACT
+      _TaskDef('📞 1. Premier Contact (Appel/Message)', 1, 'Phase 1'),
       
-      // PHASE 2: APPROFONDISSEMENT
-      _TaskDef('🏠 Invitation au Groupe de Maison', 3, 'Phase 2'),
-      _TaskDef('☕ Invitation au "Café des Nouveaux"', 7, 'Phase 2'),
-      _TaskDef('📅 Rappel pour le 2ème Dimanche', 6, 'Phase 2'), // Samedi suivant
+      // ÉTAPE 2: GROUPE DE MAISON
+      _TaskDef('🏠 2. Invitation Groupe de Maison', 3, 'Phase 1'),
       
-      // PHASE 3: SPIRITUELLE
-      _TaskDef('📖 Inscription classes d\'Affermissement', 21, 'Phase 3'),
-      _TaskDef('🌊 Entretien pour le Baptême', 25, 'Phase 3'),
-      _TaskDef('🙏 Suivi des Requêtes de Prière', 28, 'Phase 3'),
+      // ÉTAPE 3: CAFÉ DES NOUVEAUX
+      _TaskDef('☕ 3. Invitation Café des Nouveaux', 7, 'Phase 2'),
       
-      // PHASE 4: ENGAGEMENT
-      _TaskDef('🛠️ Test des Dons Spirituels', 60, 'Phase 4'),
-      _TaskDef('🤝 Présentation des Départements', 70, 'Phase 4'),
-      _TaskDef('🎖️ Entrevue d\'Intégration (Membre)', 90, 'Phase 4'),
+      // ÉTAPE 4: AFFERMISSEMENT
+      _TaskDef('📖 4. Classes d\'Affermissement', 14, 'Phase 2'),
+      
+      // ÉTAPE 5: BAPTÊME
+      _TaskDef('🌊 5. Entretien pour le Baptême', 30, 'Phase 3'),
+      
+      // ÉTAPE 6: DÉCOUVERTE DES DONS
+      _TaskDef('🛠️ 6. Découverte des Dons (Test)', 45, 'Phase 3'),
+      
+      // ÉTAPE 7: SERVICE
+      _TaskDef('🤝 7. Intégration Département', 60, 'Phase 4'),
     ];
 
     // Récupérer les tâches existantes pour ce visiteur pour éviter les doublons

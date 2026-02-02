@@ -36,7 +36,7 @@ class OfflineService {
     
     _database = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE pending_visitors (
@@ -53,9 +53,29 @@ class OfflineService {
             souhaite_etre_recontacte INTEGER NOT NULL,
             recevoir_actualites INTEGER NOT NULL,
             date_enregistrement TEXT NOT NULL,
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            baptise INTEGER DEFAULT 0,
+            souhaite_rejoindre_groupe INTEGER DEFAULT 0,
+            note_experience INTEGER DEFAULT 3,
+            points_forts TEXT,
+            commentaire_libre TEXT,
+            besoin_prioritaire TEXT,
+            voeu_service INTEGER DEFAULT 0,
+            domaine_souhaite TEXT
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE pending_visitors ADD COLUMN baptise INTEGER DEFAULT 0');
+          await db.execute('ALTER TABLE pending_visitors ADD COLUMN souhaite_rejoindre_groupe INTEGER DEFAULT 0');
+          await db.execute('ALTER TABLE pending_visitors ADD COLUMN note_experience INTEGER DEFAULT 3');
+          await db.execute('ALTER TABLE pending_visitors ADD COLUMN points_forts TEXT');
+          await db.execute('ALTER TABLE pending_visitors ADD COLUMN commentaire_libre TEXT');
+          await db.execute('ALTER TABLE pending_visitors ADD COLUMN besoin_prioritaire TEXT');
+          await db.execute('ALTER TABLE pending_visitors ADD COLUMN voeu_service INTEGER DEFAULT 0');
+          await db.execute('ALTER TABLE pending_visitors ADD COLUMN domaine_souhaite TEXT');
+        }
       },
     );
   }
@@ -120,6 +140,14 @@ class OfflineService {
       'recevoir_actualites': visitor.recevoirActualites ? 1 : 0,
       'date_enregistrement': visitor.dateEnregistrement.toIso8601String(),
       'created_at': DateTime.now().toIso8601String(),
+      'baptise': visitor.baptise ? 1 : 0,
+      'souhaite_rejoindre_groupe': visitor.souhaiteRejoindreGroupe ? 1 : 0,
+      'note_experience': visitor.noteExperience,
+      'points_forts': visitor.pointsForts.join(','),
+      'commentaire_libre': visitor.commentaireLibre,
+      'besoin_prioritaire': visitor.besoinPrioritaire,
+      'voeu_service': visitor.voeuService ? 1 : 0,
+      'domaine_souhaite': visitor.domaineSouhaite,
     });
     
     _updatePendingCount();
@@ -128,8 +156,12 @@ class OfflineService {
   /// Obtenir le nombre de visiteurs en attente de synchronisation
   Future<int> getPendingCount() async {
     if (_database == null) return 0;
-    final result = await _database!.rawQuery('SELECT COUNT(*) as count FROM pending_visitors');
-    return Sqflite.firstIntValue(result) ?? 0;
+    try {
+      final result = await _database!.rawQuery('SELECT COUNT(*) as count FROM pending_visitors');
+      return Sqflite.firstIntValue(result) ?? 0;
+    } catch (e) {
+      return 0;
+    }
   }
 
   Future<void> _updatePendingCount() async {
@@ -160,6 +192,14 @@ class OfflineService {
           souhaiteEtreRecontacte: (row['souhaite_etre_recontacte'] as int) == 1,
           recevoirActualites: (row['recevoir_actualites'] as int) == 1,
           dateEnregistrement: DateTime.parse(row['date_enregistrement'] as String),
+          baptise: (row['baptise'] as int? ?? 0) == 1,
+          souhaiteRejoindreGroupe: (row['souhaite_rejoindre_groupe'] as int? ?? 0) == 1,
+          noteExperience: row['note_experience'] as int? ?? 3,
+          pointsForts: (row['points_forts'] as String?)?.split(',').where((e) => e.isNotEmpty).toList() ?? [],
+          commentaireLibre: row['commentaire_libre'] as String?,
+          besoinPrioritaire: row['besoin_prioritaire'] as String?,
+          voeuService: (row['voeu_service'] as int? ?? 0) == 1,
+          domaineSouhaite: row['domaine_souhaite'] as String?,
         );
         
         final docRef = await FirebaseFirestore.instance
