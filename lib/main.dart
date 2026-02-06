@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
 import 'config/theme.dart';
+import 'core/utils/app_logger.dart';
 import 'screens/home_screen.dart';
 import 'screens/visitors_list_screen.dart';
 import 'screens/follow_up_screen.dart';
@@ -14,6 +16,9 @@ import 'services/notification_service.dart';
 import 'services/background_service.dart';
 import 'services/offline_service.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/firebase_service.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +36,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   
   // Initialize Offline Service
   final offlineService = OfflineService();
@@ -51,7 +57,7 @@ void main() async {
     await notificationService.scheduleDailyTaskReminder();
   }
   
-  runApp(const ZoeChurchApp());
+  runApp(const ProviderScope(child: ZoeChurchApp()));
 }
 
 class ZoeChurchApp extends StatelessWidget {
@@ -90,6 +96,74 @@ class _MainNavigatorState extends State<MainNavigator> {
       const StatisticsScreen(),
       const AdminScreen(),
     ];
+    
+    // Vérifier les mises à jour après un court délai
+    Future.delayed(const Duration(seconds: 2), () => _checkUpdate());
+  }
+
+  Future<void> _checkUpdate() async {
+    try {
+      final config = await FirebaseService.getAppConfig();
+      if (config == null) return;
+
+      final latestVersion = config['latestVersion'] as String?;
+      final downloadUrl = config['downloadUrl'] as String?;
+      final isForceUpdate = config['forceUpdate'] as bool? ?? false;
+
+      if (latestVersion == null) return;
+
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = packageInfo.version;
+
+      if (_isNewerVersion(currentVersion, latestVersion)) {
+        if (mounted) {
+          _showUpdateDialog(latestVersion, downloadUrl, isForceUpdate);
+        }
+      }
+    } catch (e) {
+      AppLogger.error('Erreur vérification mise à jour', tag: 'Update', error: e);
+    }
+  }
+
+  bool _isNewerVersion(String current, String latest) {
+    List<int> currentParts = current.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    List<int> latestParts = latest.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+
+    for (var i = 0; i < latestParts.length; i++) {
+        int currentPart = i < currentParts.length ? currentParts[i] : 0;
+        if (latestParts[i] > currentPart) return true;
+        if (latestParts[i] < currentPart) return false;
+    }
+    return false;
+  }
+
+  void _showUpdateDialog(String version, String? url, bool force) {
+    showDialog(
+      context: context,
+      barrierDismissible: !force,
+      builder: (context) => AlertDialog(
+        title: const Text('Mise à jour disponible'),
+        content: Text('Une nouvelle version ($version) de l\'application Zoe Church est disponible.'),
+        actions: [
+          if (!force)
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Plus tard'),
+            ),
+          ElevatedButton(
+            onPressed: () async {
+              if (url != null) {
+                final uri = Uri.parse(url);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              }
+            },
+            child: const Text('Mettre à jour'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -104,7 +178,7 @@ class _MainNavigatorState extends State<MainNavigator> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -184,7 +258,7 @@ class _NavItem extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.transparent,
+          color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(

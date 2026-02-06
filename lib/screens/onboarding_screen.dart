@@ -40,12 +40,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  void _onCreerCompte() {
-    // TODO: Implement sign up navigation
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Contactez un administrateur pour obtenir un code d\'accès.')),
-    );
-  }
+  // Méthode _onCreerCompte supprimée - création de compte réservée aux admins
 
   @override
   Widget build(BuildContext context) {

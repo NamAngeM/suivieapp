@@ -147,8 +147,8 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF1B365D).withOpacity(0.1),
-                          const Color(0xFFB41E3A).withOpacity(0.1),
+                          const Color(0xFF1B365D).withValues(alpha: 0.1),
+                          const Color(0xFFB41E3A).withValues(alpha: 0.1),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -226,7 +226,7 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 2),
                             ),
@@ -298,7 +298,7 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 4,
                     ),
                   ],
@@ -368,10 +368,10 @@ class _FollowUpScreenState extends State<FollowUpScreen> with SingleTickerProvid
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.zoeBlue : Colors.white.withOpacity(0.5),
+          color: selected ? AppTheme.zoeBlue : Colors.white.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? Colors.transparent : AppTheme.zoeBlue.withOpacity(0.2),
+            color: selected ? Colors.transparent : AppTheme.zoeBlue.withValues(alpha: 0.2),
           ),
         ),
         child: Text(
@@ -522,7 +522,7 @@ class _TaskCardState extends State<_TaskCard> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05), // Requested 0.05
+              color: Colors.black.withValues(alpha: 0.05), // Requested 0.05
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -538,7 +538,7 @@ class _TaskCardState extends State<_TaskCard> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppTheme.getAvatarColor(widget.task.visitorName).withOpacity(0.15),
+                  color: AppTheme.getAvatarColor(widget.task.visitorName).withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -599,7 +599,7 @@ class _TaskCardState extends State<_TaskCard> {
                           'Responsable : ${widget.assignedMemberName}',
                           style: TextStyle(
                             fontSize: 11,
-                            color: AppTheme.zoeBlue.withOpacity(0.8),
+                            color: AppTheme.zoeBlue.withValues(alpha: 0.8),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -611,7 +611,7 @@ class _TaskCardState extends State<_TaskCard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isOverdue ? AppTheme.accentRed.withOpacity(0.1) : Colors.transparent,
+                  color: isOverdue ? AppTheme.accentRed.withValues(alpha: 0.1) : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

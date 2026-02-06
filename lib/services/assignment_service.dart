@@ -1,10 +1,10 @@
 import '../models/visitor.dart';
 import '../models/task.dart';
 import 'firebase_service.dart';
-import 'notification_service.dart';
+import '../core/utils/app_logger.dart';
 
 class AssignmentService {
-  final NotificationService _notificationService = NotificationService();
+  // Note: NotificationService removed - FCM would be handled server-side
 
   /// Attribue automatiquement un visiteur à un membre de l'équipe
   Future<String?> assignVisitor(Visitor visitor, {String taskNote = 'Premier appel de bienvenue'}) async {
@@ -48,7 +48,7 @@ class AssignmentService {
     // Pour l'instant on utilise les notifs locales, donc ça ne marchera que sur le tel du membre concerné
     // si l'app tourne. Dans une vraie prod, utiliser Cloud Functions + FCM.
     
-    print('Visiteur ${visitor.nomComplet} assigné à ${selectedMember.nom}');
+    AppLogger.info('Visiteur ${visitor.nomComplet} assigné à ${selectedMember.nom}', tag: 'Assignment');
     return selectedMember.id;
   }
 

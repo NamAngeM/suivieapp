@@ -80,7 +80,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: backgroundCard,
         elevation: 2, // Légère élévation naturelle
-        shadowColor: Colors.black.withOpacity(0.1), // Ombre douce
+        shadowColor: Colors.black.withValues(alpha: 0.1), // Ombre douce
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20), // Coins plus arrondis
         ),
@@ -124,7 +124,7 @@ class AppTheme {
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           elevation: 4,
-          shadowColor: primaryColor.withOpacity(0.4), // Ombre colorée (Glow effect)
+          shadowColor: primaryColor.withValues(alpha: 0.4), // Ombre colorée (Glow effect)
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -153,7 +153,7 @@ class AppTheme {
       
       chipTheme: ChipThemeData(
         backgroundColor: Colors.white,
-        selectedColor: primaryColor.withOpacity(0.1),
+        selectedColor: primaryColor.withValues(alpha: 0.1),
         secondarySelectedColor: primaryColor,
         labelStyle: GoogleFonts.inter(color: textPrimary, fontWeight: FontWeight.w500),
         secondaryLabelStyle: GoogleFonts.inter(color: primaryColor, fontWeight: FontWeight.w600),

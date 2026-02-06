@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.zoechurch.zoe_church_visitors"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "26.1.10909125"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

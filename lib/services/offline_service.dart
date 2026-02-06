@@ -8,6 +8,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/visitor.dart';
 import 'follow_up_service.dart';
+import '../core/utils/app_logger.dart';
 
 class OfflineService {
   static final OfflineService _instance = OfflineService._internal();
@@ -253,7 +254,7 @@ class OfflineService {
         return Visitor.fromFirestore(snapshot.docs.first);
       }
     } catch (e) {
-      print('Erreur recherche visiteur: $e');
+      AppLogger.error('Erreur recherche visiteur', tag: 'Offline', error: e);
     }
     return null;
   }

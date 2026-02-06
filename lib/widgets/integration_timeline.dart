@@ -35,7 +35,7 @@ class IntegrationTimelineWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.05),
+        color: AppTheme.primaryColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -66,7 +66,7 @@ class IntegrationTimelineWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
               valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               minHeight: 8,
             ),
@@ -164,7 +164,7 @@ class IntegrationTimelineWidget extends StatelessWidget {
                       width: 2,
                     ),
                     boxShadow: step.status == StepStatus.inProgress
-                        ? [BoxShadow(color: AppTheme.zoeBlue.withOpacity(0.3), blurRadius: 8)]
+                        ? [BoxShadow(color: AppTheme.zoeBlue.withValues(alpha: 0.3), blurRadius: 8)]
                         : null,
                   ),
                   child: Center(
@@ -315,7 +315,7 @@ class IntegrationTimelineWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

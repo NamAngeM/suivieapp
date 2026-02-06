@@ -6,6 +6,7 @@ import '../models/team_member.dart';
 import '../models/interaction.dart';
 import '../models/message_template.dart';
 import '../models/audit_log_entry.dart';
+import '../core/utils/app_logger.dart';
 
 class FirebaseService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -17,6 +18,19 @@ class FirebaseService {
   static CollectionReference get settingsCollection => _firestore.collection('settings');
   static CollectionReference get templatesCollection => _firestore.collection('message_templates');
   static CollectionReference get auditCollection => _firestore.collection('audit_logs');
+
+  // === APP CONFIG & UPDATES ===
+  static Future<Map<String, dynamic>?> getAppConfig() async {
+    try {
+      final doc = await _firestore.collection('settings').doc('app_config').get();
+      if (doc.exists) {
+        return doc.data();
+      }
+    } catch (e) {
+      AppLogger.error('Error getting app config', tag: 'Firebase', error: e);
+    }
+    return null;
+  }
 
   // === AUTH ===
   static TeamMember? _currentUser;
@@ -94,10 +108,10 @@ class FirebaseService {
         return false;
       }
     } on FirebaseAuthException catch (e) {
-      print('Auth Error: ${e.code}');
+      AppLogger.error('Auth Error', tag: 'Firebase', error: e);
       return false;
     } catch (e) {
-      print('Error logging in: $e');
+      AppLogger.error('Error logging in', tag: 'Firebase', error: e);
       return false;
     }
   }
@@ -178,7 +192,7 @@ class FirebaseService {
           .get();
       return snapshot.docs.map((doc) => FollowUpTask.fromFirestore(doc)).toList();
     } catch (e) {
-      print('Erreur getTasksForVisitor: $e');
+      AppLogger.error('Erreur getTasksForVisitor', tag: 'Firebase', error: e);
       return [];
     }
   }
@@ -277,7 +291,6 @@ class FirebaseService {
     if (doc.exists) {
       return (doc.data() as Map<String, dynamic>)[key] ?? 0;
     }
-    return 0;
     return 0;
   }
 

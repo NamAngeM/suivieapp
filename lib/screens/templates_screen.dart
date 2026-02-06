@@ -24,11 +24,11 @@ class TemplatesScreen extends StatelessWidget {
                 hintText: 'Ex: Bienvenue',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                  borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                  borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -45,11 +45,11 @@ class TemplatesScreen extends StatelessWidget {
                 hintText: 'Bonjour [Prénom], ...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                  borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                  borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -247,8 +247,8 @@ class TemplatesScreen extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B365D).withOpacity(0.1),
-            const Color(0xFFB41E3A).withOpacity(0.1),
+            const Color(0xFF1B365D).withValues(alpha: 0.1),
+            const Color(0xFFB41E3A).withValues(alpha: 0.1),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -273,7 +273,7 @@ class TemplatesScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary.withOpacity(0.7),
+                  color: AppTheme.textSecondary.withValues(alpha: 0.7),
                   letterSpacing: 1.2,
                 ),
               ),

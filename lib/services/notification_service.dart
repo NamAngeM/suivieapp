@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/utils/app_logger.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -63,7 +64,7 @@ class NotificationService {
   void _onNotificationTapped(NotificationResponse response) {
     // Gérer le tap sur la notification
     // Peut naviguer vers un écran spécifique selon le payload
-    print('Notification tapped: ${response.payload}');
+    AppLogger.debug('Notification tapped: ${response.payload}', tag: 'Notification');
   }
 
   // === Préférences ===

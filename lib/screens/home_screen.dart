@@ -6,6 +6,11 @@ import '../services/notification_service.dart';
 import '../services/offline_service.dart';
 import '../services/assignment_service.dart';
 import '../services/follow_up_service.dart';
+import '../widgets/form/section_header.dart';
+import '../widgets/form/custom_text_field.dart';
+import '../widgets/form/custom_dropdown_field.dart';
+import '../widgets/form/choice_widgets.dart';
+import '../widgets/form/rating_widgets.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -224,8 +229,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFF1B365D).withOpacity(0.1),
-                            const Color(0xFFB41E3A).withOpacity(0.1),
+                            const Color(0xFF1B365D).withValues(alpha: 0.1),
+                            const Color(0xFFB41E3A).withValues(alpha: 0.1),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -243,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textSecondary.withOpacity(0.7),
+                              color: AppTheme.textSecondary.withValues(alpha: 0.7),
                               letterSpacing: 1.2,
                             ),
                           ),
@@ -275,10 +280,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 32),
                           
                           // 🔵 SECTION 1 : Identité & Contact
-                          _buildSectionHeader('Identité & Contact', Icons.badge_outlined, const Color(0xFF1B365D)),
+                          SectionHeader(
+                            title: 'Identité & Contact',
+                            icon: Icons.badge_outlined,
+                            color: const Color(0xFF1B365D),
+                          ),
                           const SizedBox(height: 16),
                           
-                          _buildTextField(
+                          CustomTextField(
                             controller: _nomController,
                             label: 'NOM COMPLET',
                             hint: 'Ex: JEAN DUPONT',
@@ -300,14 +309,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              Expanded(child: _buildSegmentedChoice('👨 Homme', _sexe == 'Homme', () => setState(() => _sexe = 'Homme'))),
+                              Expanded(
+                                child: SegmentedChoice(
+                                  label: '👨 Homme',
+                                  selected: _sexe == 'Homme',
+                                  onTap: () => setState(() => _sexe = 'Homme'),
+                                ),
+                              ),
                               const SizedBox(width: 12),
-                              Expanded(child: _buildSegmentedChoice('👩 Femme', _sexe == 'Femme', () => setState(() => _sexe = 'Femme'))),
+                              Expanded(
+                                child: SegmentedChoice(
+                                  label: '👩 Femme',
+                                  selected: _sexe == 'Femme',
+                                  onTap: () => setState(() => _sexe = 'Femme'),
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 20),
                           
-                          _buildTextField(
+                          CustomTextField(
                             controller: _telephoneController,
                             label: 'TÉLÉPHONE WHATSAPP 🇬🇦',
                             hint: '07 08 45 12',
@@ -323,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 16),
                           
-                          _buildTextField(
+                          CustomTextField(
                             controller: _quartierController,
                             label: 'QUARTIER D\'HABITATION',
                             hint: 'Ex: Akanda, Glass...',
@@ -349,7 +370,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: ['Célibataire', 'Marié', 'Fiancé', 'Veuf'].map((status) {
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 8),
-                                  child: _buildChoiceChip(status, _statutMatrimonial == status, () => setState(() => _statutMatrimonial = status)),
+                                  child: CustomChoiceChip(
+                                    label: status,
+                                    selected: _statutMatrimonial == status,
+                                    onTap: () => setState(() => _statutMatrimonial = status),
+                                  ),
                                 );
                               }).toList(),
                             ),
@@ -357,10 +382,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 32),
                           
                           // 🔴 SECTION 2 : Profil & Première Visite
-                          _buildSectionHeader('Profil & Première Visite', Icons.accessibility_new, const Color(0xFFB41E3A)),
+                          SectionHeader(
+                            title: 'Profil & Première Visite',
+                            icon: Icons.accessibility_new,
+                            color: const Color(0xFFB41E3A),
+                          ),
                           const SizedBox(height: 16),
                           
-                          _buildDropdownField(
+                          CustomDropdownField(
                             label: 'SOURCE D\'INVITATION',
                             value: _commentConnu,
                             items: _sourcesOptions,
@@ -368,15 +397,33 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 16),
                           
-                          _buildToggleRow('Première visite ?', _premiereVisite, (val) => setState(() => _premiereVisite = val)),
+                          ToggleRow(
+                            title: 'Première visite ?',
+                            value: _premiereVisite,
+                            onChanged: (val) => setState(() => _premiereVisite = val),
+                          ),
                           const Divider(height: 24),
-                          _buildToggleRow('Déjà baptisé(e) ?', _baptise, (val) => setState(() => _baptise = val)),
+                          ToggleRow(
+                            title: 'Déjà baptisé(e) ?',
+                            value: _baptise,
+                            onChanged: (val) => setState(() => _baptise = val),
+                          ),
                           const Divider(height: 24),
-                          _buildSwitchTile('Souhaite rejoindre un Groupe de Maison', _souhaiteRejoindreGroupe, (val) => setState(() => _souhaiteRejoindreGroupe = val)),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Souhaite rejoindre un Groupe de Maison'),
+                            value: _souhaiteRejoindreGroupe,
+                            activeColor: AppTheme.zoeBlue,
+                            onChanged: (val) => setState(() => _souhaiteRejoindreGroupe = val),
+                          ),
                           const SizedBox(height: 32),
                           
                           // ✨ SECTION 3 : Appréciation du Culte
-                          _buildSectionHeader('Appréciation du Culte', Icons.star_outline, Colors.amber[800]!),
+                          SectionHeader(
+                            title: 'Appréciation du Culte',
+                            icon: Icons.star_outline,
+                            color: Colors.amber[800]!,
+                          ),
                           const SizedBox(height: 16),
                           
                           const Text('NOTE DE L\'EXPÉRIENCE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
@@ -384,10 +431,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildEmojiRating(1, '😞', _noteExperience),
-                              _buildEmojiRating(2, '😐', _noteExperience),
-                              _buildEmojiRating(3, '🙂', _noteExperience),
-                              _buildEmojiRating(4, '😍', _noteExperience),
+                              EmojiRating(value: 1, emoji: '😞', groupValue: _noteExperience, onChanged: (val) => setState(() => _noteExperience = val)),
+                              EmojiRating(value: 2, emoji: '😐', groupValue: _noteExperience, onChanged: (val) => setState(() => _noteExperience = val)),
+                              EmojiRating(value: 3, emoji: '🙂', groupValue: _noteExperience, onChanged: (val) => setState(() => _noteExperience = val)),
+                              EmojiRating(value: 4, emoji: '😍', groupValue: _noteExperience, onChanged: (val) => setState(() => _noteExperience = val)),
                             ],
                           ),
                           const SizedBox(height: 24),
@@ -419,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 16),
                           
-                          _buildTextField(
+                          CustomTextField(
                             controller: _commentaireController,
                             label: 'COMMENTAIRE LIBRE',
                             hint: 'Une remarque ?',
@@ -429,10 +476,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 32),
                           
                           // 🔥 SECTION 4 : Aspirations & Besoins
-                          _buildSectionHeader('Aspirations & Besoins', Icons.local_fire_department_outlined, Colors.deepOrange),
+                          SectionHeader(
+                            title: 'Aspirations & Besoins',
+                            icon: Icons.local_fire_department_outlined,
+                            color: Colors.deepOrange,
+                          ),
                           const SizedBox(height: 16),
                           
-                          _buildDropdownField(
+                          CustomDropdownField(
                             label: 'BESOIN PRIORITAIRE',
                             value: _besoinPrioritaire,
                             hint: 'Sélectionner un besoin...',
@@ -451,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           
                            if (_voeuService) ...[
                              const SizedBox(height: 12),
-                             _buildDropdownField(
+                             CustomDropdownField(
                                label: 'DOMAINE SOUHAITÉ',
                                value: _domaineSouhaite,
                                hint: 'Choisir un domaine...',
@@ -462,10 +513,14 @@ class _HomeScreenState extends State<HomeScreen> {
                            const SizedBox(height: 32),
                           
                           // 🙏 SECTION 5 : Accompagnement & Suivi
-                          _buildSectionHeader('Accompagnement & Suivi', Icons.handshake_outlined, AppTheme.zoeBlue),
+                          SectionHeader(
+                            title: 'Accompagnement & Suivi',
+                            icon: Icons.handshake_outlined,
+                            color: AppTheme.zoeBlue,
+                          ),
                           const SizedBox(height: 16),
                           
-                          _buildTextField(
+                          CustomTextField(
                             controller: _requetePriereController,
                             label: 'REQUÊTE DE PRIÈRE',
                             hint: 'Sujet précis...',
@@ -495,7 +550,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 backgroundColor: AppTheme.zoeBlue,
                                 foregroundColor: Colors.white,
                                 elevation: 8,
-                                shadowColor: AppTheme.zoeBlue.withOpacity(0.3),
+                                shadowColor: AppTheme.zoeBlue.withValues(alpha: 0.3),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -530,249 +585,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, IconData icon, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(width: 10),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(child: Divider(color: color.withOpacity(0.2))),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildSegmentedChoice(String label, bool selected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.zoeBlue : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: selected ? AppTheme.zoeBlue : Colors.grey.shade300),
-          boxShadow: selected ? [BoxShadow(color: AppTheme.zoeBlue.withOpacity(0.3), blurRadius: 4)] : [],
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : Colors.black87,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildEmojiRating(int value, String emoji, int groupValue) {
-    final selected = value == groupValue;
-    return GestureDetector(
-      onTap: () => setState(() => _noteExperience = value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.all(selected ? 12 : 8),
-        decoration: BoxDecoration(
-          color: selected ? Colors.amber.withOpacity(0.2) : Colors.transparent,
-          shape: BoxShape.circle,
-          border: selected ? Border.all(color: Colors.amber, width: 2) : null,
-        ),
-        child: Text(
-          emoji,
-          style: TextStyle(fontSize: selected ? 32 : 24),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildToggleRow(String title, bool value, ValueChanged<bool> onChanged) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-        Row(
-          children: [
-            _buildMinisegment('Non', !value, () => onChanged(false)),
-            const SizedBox(width: 8),
-            _buildMinisegment('Oui', value, () => onChanged(true)),
-          ],
-        )
-      ],
-    );
-  }
-
-  Widget _buildMinisegment(String label, bool selected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.zoeBlue : Colors.grey[200],
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : Colors.grey[600],
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdownField({
-    required String label,
-    required String? value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-    String? hint,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: AppTheme.backgroundGrey,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.zoeBlue.withOpacity(0.15)),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: items.contains(value) ? value : null,
-              hint: hint != null ? Text(hint) : null,
-              isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down),
-              items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-              onChanged: onChanged,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    IconData? icon,
-    TextInputType? keyboardType,
-    String? prefixText, // New argument
-    TextCapitalization textCapitalization = TextCapitalization.none, // New argument
-    int maxLines = 1,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textSecondary,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          textCapitalization: textCapitalization,
-          maxLines: maxLines,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixText: prefixText,
-            hintStyle: TextStyle(color: Colors.grey[400]),
-            prefixIcon: icon != null ? Icon(icon, color: Colors.grey[400]) : null,
-            filled: true,
-            fillColor: AppTheme.backgroundGrey,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppTheme.zoeBlue, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppTheme.accentRed),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChoiceChip(String label, bool selected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.zoeBlue : AppTheme.backgroundGrey,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : AppTheme.textPrimary,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSwitchTile(String title, bool value, ValueChanged<bool> onChanged, {IconData? icon}) {
-    return Row(
-      children: [
-        if (icon != null) ...[
-          Icon(icon, color: Colors.grey[400], size: 20),
-          const SizedBox(width: 12),
-        ],
-        Expanded(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-            ),
-          ),
-        ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: AppTheme.zoeBlue,
-        ),
-      ],
     );
   }
 }

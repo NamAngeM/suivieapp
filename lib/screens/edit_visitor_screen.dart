@@ -259,7 +259,7 @@ class _EditVisitorScreenState extends State<EditVisitorScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.backgroundGrey,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                  border: Border.all(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
@@ -323,7 +323,7 @@ class _EditVisitorScreenState extends State<EditVisitorScreen> {
                     backgroundColor: AppTheme.zoeBlue,
                     foregroundColor: Colors.white,
                     elevation: 8,
-                    shadowColor: AppTheme.zoeBlue.withOpacity(0.3),
+                    shadowColor: AppTheme.zoeBlue.withValues(alpha: 0.3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -370,7 +370,7 @@ class _EditVisitorScreenState extends State<EditVisitorScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Divider(color: Colors.grey.withOpacity(0.2))),
+          Expanded(child: Divider(color: Colors.grey.withValues(alpha: 0.2))),
         ],
       ),
     );
@@ -411,11 +411,11 @@ class _EditVisitorScreenState extends State<EditVisitorScreen> {
             fillColor: AppTheme.backgroundGrey,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+              borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+              borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

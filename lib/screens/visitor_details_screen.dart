@@ -25,7 +25,6 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
   late Visitor _visitor;
   late TabController _tabController;
   final _integrationService = IntegrationService();
-  final _whatsappService = WhatsappService();
   bool _isLoading = false;
   String? _assignedToName;
 
@@ -71,7 +70,7 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
               
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: AppTheme.zoeBlue.withOpacity(0.1),
+                  backgroundColor: AppTheme.zoeBlue.withValues(alpha: 0.1),
                   child: Text(member.initials, style: const TextStyle(color: AppTheme.zoeBlue, fontSize: 12)),
                 ),
                 title: Text(member.nom),
@@ -131,12 +130,7 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
     }
   }
 
-  Future<void> _sendSMS(String phone) async {
-    final url = Uri.parse('sms:$phone');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    }
-  }
+  // Note: _sendSMS method removed - using WhatsApp templates instead
 
   Future<void> _showWhatsAppTemplates() async {
     WhatsAppTemplateSheet.show(context, _visitor);
@@ -291,7 +285,7 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 offset: const Offset(0, -2),
                 blurRadius: 10,
               ),
@@ -318,11 +312,11 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
                     hintText: 'Ajouter une note...',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                      borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                      borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -366,7 +360,7 @@ class _VisitorDetailsScreenState extends State<VisitorDetailsScreen> with Single
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, size: 16, color: color),

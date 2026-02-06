@@ -125,7 +125,7 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.15),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.15),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
@@ -207,8 +207,8 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B365D).withOpacity(0.1),
-            const Color(0xFFB41E3A).withOpacity(0.1),
+            const Color(0xFF1B365D).withValues(alpha: 0.1),
+            const Color(0xFFB41E3A).withValues(alpha: 0.1),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -294,7 +294,7 @@ class _QrDisplayScreenState extends State<QrDisplayScreen> {
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.2),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.2),
                       blurRadius: 40,
                       offset: const Offset(0, 15),
                     ),

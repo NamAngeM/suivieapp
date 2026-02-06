@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
+                          color: Colors.black.withValues(alpha: 0.06),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -187,11 +187,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                              borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
-                              borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                              borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -211,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               backgroundColor: AppTheme.zoeBlue,
                               foregroundColor: Colors.white,
                               elevation: 4,
-                              shadowColor: AppTheme.zoeBlue.withOpacity(0.4),
+                              shadowColor: AppTheme.zoeBlue.withValues(alpha: 0.4),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),

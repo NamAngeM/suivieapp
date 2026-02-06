@@ -206,8 +206,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B365D).withOpacity(0.1),
-            const Color(0xFFB41E3A).withOpacity(0.1),
+            const Color(0xFF1B365D).withValues(alpha: 0.1),
+            const Color(0xFFB41E3A).withValues(alpha: 0.1),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -232,7 +232,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary.withOpacity(0.7),
+                  color: AppTheme.textSecondary.withValues(alpha: 0.7),
                   letterSpacing: 1.2,
                 ),
               ),
@@ -266,7 +266,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -286,7 +286,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: isLoading 
@@ -336,7 +336,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       decoration: BoxDecoration(
         color: AppTheme.backgroundGrey,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.zoeBlue.withOpacity(0.1)),
+        border: Border.all(color: AppTheme.zoeBlue.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [

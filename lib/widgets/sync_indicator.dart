@@ -178,9 +178,9 @@ class _SyncIndicatorState extends State<SyncIndicator> with SingleTickerProvider
       return Colors.grey[200]!;
     }
     if (_pendingCount > 0) {
-      return AppTheme.accentOrange.withOpacity(0.15);
+      return AppTheme.accentOrange.withValues(alpha: 0.15);
     }
-    return AppTheme.accentGreen.withOpacity(0.15);
+    return AppTheme.accentGreen.withValues(alpha: 0.15);
   }
 
   Color _getTextColor() {

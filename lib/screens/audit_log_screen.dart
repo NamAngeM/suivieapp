@@ -102,8 +102,8 @@ class AuditLogScreen extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B365D).withOpacity(0.1),
-            const Color(0xFFB41E3A).withOpacity(0.1),
+            const Color(0xFF1B365D).withValues(alpha: 0.1),
+            const Color(0xFFB41E3A).withValues(alpha: 0.1),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -128,7 +128,7 @@ class AuditLogScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary.withOpacity(0.7),
+                  color: AppTheme.textSecondary.withValues(alpha: 0.7),
                   letterSpacing: 1.2,
                 ),
               ),

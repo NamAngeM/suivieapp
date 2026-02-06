@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
 import 'notification_service.dart';
+import '../core/utils/app_logger.dart';
 
 /// Callback exécuté en arrière-plan par WorkManager
 @pragma('vm:entry-point')
@@ -28,7 +29,7 @@ void callbackDispatcher() {
       
       return true;
     } catch (e) {
-      print('Background task error: $e');
+      AppLogger.error('Background task error', tag: 'Background', error: e);
       return false;
     }
   });

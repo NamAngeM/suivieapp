@@ -7,6 +7,8 @@ import '../widgets/sync_indicator.dart';
 import 'templates_screen.dart';
 import 'audit_log_screen.dart';
 import 'login_screen.dart';
+import '../widgets/admin/admin_widgets.dart';
+import '../widgets/common/screen_layout.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -90,91 +92,108 @@ class _AdminScreenState extends State<AdminScreen> {
 
   void _showAddMemberDialog() {
     final nameController = TextEditingController();
-    final roleController = TextEditingController();
+    String selectedRole = 'Membre'; // Défault
     final emailController = TextEditingController();
     final codeController = TextEditingController();
     
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Ajouter un membre'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nom',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: roleController,
-              decoration: const InputDecoration(
-                labelText: 'Rôle (Admin, Éditeur, Membre)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: codeController,
-              decoration: InputDecoration(
-                labelText: 'Code d\'accès',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Ajouter un membre'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppTheme.zoeBlue, width: 2),
-                ),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () {
-                    final code = (100000 + DateTime.now().millisecondsSinceEpoch % 900000).toString();
-                    codeController.text = code;
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedRole,
+                  decoration: const InputDecoration(
+                    labelText: 'Rôle',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['Membre', 'Éditeur', 'Admin'].map((String role) {
+                    return DropdownMenuItem<String>(
+                      value: role,
+                      child: Text(role),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setDialogState(() {
+                        selectedRole = newValue;
+                      });
+                    }
                   },
                 ),
-              ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: codeController,
+                  decoration: InputDecoration(
+                    labelText: 'Code d\'accès',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppTheme.zoeBlue, width: 2),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        final code = (100000 + DateTime.now().millisecondsSinceEpoch % 900000).toString();
+                        codeController.text = code;
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (nameController.text.isNotEmpty && codeController.text.isNotEmpty) {
+                  final member = TeamMember(
+                    id: '',
+                    nom: nameController.text,
+                    role: selectedRole.toLowerCase(),
+                    email: emailController.text,
+                    isAdmin: selectedRole.toLowerCase() == 'admin',
+                    accessCode: codeController.text,
+                  );
+                  await FirebaseService.addTeamMember(member);
+                  if (context.mounted) Navigator.pop(context);
+                }
+              },
+              child: const Text('Ajouter'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.isNotEmpty && codeController.text.isNotEmpty) {
-                final member = TeamMember(
-                  id: '',
-                  nom: nameController.text,
-                  role: roleController.text.isEmpty ? 'membre' : roleController.text,
-                  email: emailController.text,
-                  isAdmin: roleController.text.toLowerCase() == 'admin',
-                  accessCode: codeController.text,
-                );
-                await FirebaseService.addTeamMember(member);
-                if (context.mounted) Navigator.pop(context);
-              }
-            },
-            child: const Text('Ajouter'),
-          ),
-        ],
       ),
     );
   }
@@ -216,8 +235,8 @@ class _AdminScreenState extends State<AdminScreen> {
                      decoration: BoxDecoration(
                        gradient: LinearGradient(
                          colors: [
-                           const Color(0xFF1B365D).withOpacity(0.1),
-                           const Color(0xFFB41E3A).withOpacity(0.1),
+                           const Color(0xFF1B365D).withValues(alpha: 0.1),
+                           const Color(0xFFB41E3A).withValues(alpha: 0.1),
                          ],
                          begin: Alignment.topLeft,
                          end: Alignment.bottomRight,
@@ -292,7 +311,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _buildSettingsCard(
+                        SettingsCard(
                           child: ListTile(
                             leading: const Icon(Icons.message_outlined, color: AppTheme.primaryColor),
                             title: const Text('Templates WhatsApp'),
@@ -307,7 +326,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _buildSettingsCard(
+                        SettingsCard(
                           child: ListTile(
                             leading: const Icon(Icons.security, color: AppTheme.accentOrange),
                             title: const Text('Journal d\'Audit'),
@@ -353,7 +372,7 @@ class _AdminScreenState extends State<AdminScreen> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 2),
                               ),
@@ -385,7 +404,7 @@ class _AdminScreenState extends State<AdminScreen> {
                               
                               return Column(
                                 children: members.map((member) {
-                                  return _TeamMemberTile(member: member);
+                                  return TeamMemberTile(member: member);
                                 }).toList(),
                               );
                             },
@@ -409,7 +428,7 @@ class _AdminScreenState extends State<AdminScreen> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 2),
                               ),
@@ -426,11 +445,11 @@ class _AdminScreenState extends State<AdminScreen> {
                                     fillColor: AppTheme.backgroundGrey,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                                      borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
-                                      borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                                      borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -532,7 +551,7 @@ class _AdminScreenState extends State<AdminScreen> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 2),
                               ),
@@ -540,34 +559,34 @@ class _AdminScreenState extends State<AdminScreen> {
                           ),
                           child: Column(
                             children: [
-                              _buildNotificationSwitch(
-                                'Activer les notifications',
-                                'Recevoir toutes les notifications',
-                                Icons.notifications_outlined,
-                                _notificationsEnabled,
-                                (value) async {
+                              NotificationSwitch(
+                                title: 'Activer les notifications',
+                                subtitle: 'Recevoir toutes les notifications',
+                                icon: Icons.notifications_outlined,
+                                value: _notificationsEnabled,
+                                onChanged: (value) async {
                                   await _notificationService.setNotificationsEnabled(value);
                                   setState(() => _notificationsEnabled = value);
                                 },
                               ),
                               const Divider(height: 24),
-                              _buildNotificationSwitch(
-                                'Rappel J+3',
-                                'Notification 3 jours après inscription',
-                                Icons.calendar_today_outlined,
-                                _reminderJ3Enabled,
-                                (value) async {
+                              NotificationSwitch(
+                                title: 'Rappel J+3',
+                                subtitle: 'Notification 3 jours après inscription',
+                                icon: Icons.calendar_today_outlined,
+                                value: _reminderJ3Enabled,
+                                onChanged: (value) async {
                                   await _notificationService.setReminderJ3Enabled(value);
                                   setState(() => _reminderJ3Enabled = value);
                                 },
                               ),
                               const Divider(height: 24),
-                              _buildNotificationSwitch(
-                                'Rappel tâches',
-                                'Notification quotidienne tâches en retard',
-                                Icons.task_alt_outlined,
-                                _reminderTasksEnabled,
-                                (value) async {
+                              NotificationSwitch(
+                                title: 'Rappel tâches',
+                                subtitle: 'Notification quotidienne tâches en retard',
+                                icon: Icons.task_alt_outlined,
+                                value: _reminderTasksEnabled,
+                                onChanged: (value) async {
                                   await _notificationService.setReminderTasksEnabled(value);
                                   setState(() => _reminderTasksEnabled = value);
                                 },
@@ -621,147 +640,6 @@ class _AdminScreenState extends State<AdminScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-  
-  Widget _buildNotificationSwitch(
-    String title,
-    String subtitle,
-    IconData icon,
-    bool value,
-    ValueChanged<bool> onChanged,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.grey[400], size: 24),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              Text(
-                subtitle,
-                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-              ),
-            ],
-          ),
-        ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: AppTheme.zoeBlue,
-        ),
-      ],
-    );
-  }
-  Widget _buildSettingsCard({required Widget child}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: child,
-    );
-  }
-}
-
-class _TeamMemberTile extends StatelessWidget {
-  final TeamMember member;
-
-  const _TeamMemberTile({required this.member});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          // Avatar
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppTheme.getAvatarColor(member.nom).withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                member.initials,
-                style: TextStyle(
-                  color: AppTheme.getAvatarColor(member.nom),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  member.nom,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  '${member.role} • #${member.accessCode}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[500],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Disponibilité & Charge
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Switch(
-                value: member.isAvailable,
-                onChanged: (val) {
-                  FirebaseService.updateTeamMember(member.copyWith(isAvailable: val));
-                  FirebaseService.logAction(
-                    action: 'update_availability',
-                    details: 'Membre: ${member.nom}, Dispo: $val',
-                  );
-                },
-                activeThumbColor: AppTheme.zoeBlue,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.assignment, size: 12, color: Colors.grey[400]),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${member.activeTasksCount} tâches',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

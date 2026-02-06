@@ -43,11 +43,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               labelText: 'Nombre de visiteurs visé',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppTheme.zoeBlue.withOpacity(0.15)),
+                borderSide: BorderSide(color: AppTheme.zoeBlue.withValues(alpha: 0.15)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -128,8 +128,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                const Color(0xFF1B365D).withOpacity(0.1),
-                                const Color(0xFFB41E3A).withOpacity(0.1),
+                                const Color(0xFF1B365D).withValues(alpha: 0.1),
+                                const Color(0xFFB41E3A).withValues(alpha: 0.1),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -388,8 +388,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  AppTheme.primaryColor.withOpacity(0.3),
-                  AppTheme.primaryColor.withOpacity(0.0),
+                  AppTheme.primaryColor.withValues(alpha: 0.3),
+                  AppTheme.primaryColor.withValues(alpha: 0.0),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -504,7 +504,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
